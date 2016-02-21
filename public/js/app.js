@@ -1,140 +1,111 @@
 ;
 jQuery(function ($) {
     //clientIo.socket.id  client session id
-    var ball = {
-        pos: [0, 0]
-    };
-    var IO = {
-        init: function () {
-            IO.socket = io.connect();
-            IO.bindEvents();
-        },
-        bindEvents: function () {
-            IO.socket.on('connected', IO.onConnect);
-            IO.socket.on('pos', function (data) {
-                ball.pos = data;
-                console.log('set data', data);
-                //requestAnimationFrame(loop);
-                //loop();
-            })
-        },
-        onConnect: function () {
-            IO.socket.emit('getPos');
+    var entity = undefined;
+
+    var keyEvents = {left: false, right: false};
+
+    function keySet(e, state) {
+        var key = e.keyCode;
+
+        if (key == 37 || key == 39 || key == 32) {
+
+            e.preventDefault();
+
+            switch (key) {
+
+                case 37:
+                    key = 'left';
+                    break;
+                case 39:
+                    key = 'right';
+                    break;
+
+                case 32:
+                    key = 'space';
+                    break;
+
+            }
+
+            keyEvents[key] = state;
+
         }
-    };
+    }
 
-    IO.init();
+    $(document).keydown(function (e) {
+        keySet(e, true);
+    });
+    $(document).keyup(function (e) {
+        keySet(e, false);
+    });
 
-    /*var dt = 1;
-    var speed = 1;
-    var lastTime = 1;*/
-
-   /* setInterval(function () {
-        var now = Date.now();
-        dt = (now - lastTime) / 1000.0;
-
-
-        if (ball.pos[0] > 1300 - 15) {
-            speed = -speed;
-        }
-        else if (ball.pos[0] < 0) {
-            speed = -speed;
+    var ClientIo = (function () {
+        function ClientIo() {
+            this.init();
         }
 
-        ball.pos[0] += speed;
+        ClientIo.prototype.init = function () {
+            this.socket = io.connect();
+            this.bindEvents();
+        };
 
-    }, 1000 / 200);*/
+        ClientIo.prototype.bindEvents = function () {
+            this.socket.on('connected', this.onConnected.bind(this));
+            this.socket.on('entity', this.entity.bind(this));
+        };
+
+        ClientIo.prototype.onConnected = function () {
+            this.socket.emit('createRoom', 'room2');
+            //this.socket.emit('joinRoom','room2')
+        };
+
+        ClientIo.prototype.createRoom = function (roomName) {
+            this.socket.emit('createRoom', roomName);
+        };
+
+        ClientIo.prototype.entity = function (data) {
+            entity = data;
+        };
+
+        return ClientIo;
+    })();
+
+    var clientIo = new ClientIo();
+
 
     var canvas = document.getElementById('myCanvas');
     var ctx = canvas.getContext('2d');
 
 
-    function ct() {
+    function draw() {
+        ctx.clearRect(0, 0, 2000, 2000);
         ctx.beginPath();
-        ctx.clearRect(0, 0, 1300, 1300);
-        ctx.arc(ball.pos[0], 75, 10, 0, 2 * Math.PI, false);
-        ctx.fillStyle = 'red';
+        ctx.arc(entity.ball.position.x, entity.ball.position.y, entity.ball.radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#fff';
         ctx.fill();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'red';
         ctx.stroke();
+        //ctx.clearRect(0, 0, 2000, 2000);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(entity.playerOne.position.x, entity.playerOne.position.y, entity.playerOne.width, entity.playerOne.height);
+        ctx.fillRect(entity.playerTwo.position.x, entity.playerTwo.position.y, entity.playerTwo.width, entity.playerTwo.height);
     }
 
+    var ss = 15;
+    var dd = 15;
+
     function loop() {
-        ct();
-        console.log('draw data', ball.pos);
+        ss += 1;
+        dd += 1;
         requestAnimationFrame(loop);
-    };
+        if (entity !== undefined) {
+            draw();
+            clientIo.socket.emit('keyEvents', keyEvents);
+        }
+
+        $('body').css({'background-position': ss + 'px ' + dd + 'px'})
+    }
 
     loop();
 
-    /* var ClientIo = (function () {
-     function ClientIo() {
-     this.init();
-     }
-
-     ClientIo.prototype.init = function () {
-     this.socket = io.connect();
-     this.bindEvents();
-     };
-
-     ClientIo.prototype.bindEvents = function () {
-     this.socket.on('connected', this.onConnected.bind(this));
-     this.socket.on('giveId', this.giveId.bind(this));
-     };
-
-     ClientIo.prototype.onConnected = function () {
-     this.socket.emit('getId');
-     };
-     ClientIo.prototype.giveId = function (data) {
-     this.id = data;
-     };
-
-     ClientIo.prototype.createRoom = function (roomName) {
-     this.socket.emit('createRoom', roomName);
-     };
-
-     return ClientIo;
-     })();*/
-
-    //var clientIo = new ClientIo();
-
-
-    /*var clientIo = {
-
-     init: function () {
-     clientIo.socket = io.connect();
-     clientIo.bindEvents();
-     },
-
-     bindEvents: function () {
-     clientIo.socket.on('newGameCreated', clientIo.onNewGameCreated);
-     }
-
-
-     };
-
-
-     clientIo.init();
-
-     $('.create-room').click(function (e) {
-     e.preventDefault();
-     console.log(clientIo.socket.id);
-     var room = prompt();
-
-     clientIo.socket.emit('createNewRoom', room);
-     });
-
-     $('.some-room').click(function (e) {
-     e.preventDefault();
-     var room = prompt();
-     clientIo.socket.emit('joinRoom', room);
-
-     });
-     $('.get-rooms').click(function (e) {
-     e.preventDefault();
-     console.log('s');
-     clientIo.socket.emit('getRooms');
-     });*/
 
 }($));

@@ -10,9 +10,24 @@ a {
   text-decoration: none;
   color: #fff;
 }
+.tennis-box {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#myCanvas {
+  position: relative;
+  height: 96%;
+  top: 2%;
+  border: solid 1px #ff6633;
+  box-shadow: inset 0 0 12px #ff6633, 0 0 12px #ff6633;
+}
 body {
   margin: 0;
-  background: black;
+  background: url('../img/bg-pattern.jpg');
   color: #2afeff;
   font-size: 14px;
   font-family: 'Open-sans', sans-serif;
@@ -28,10 +43,63 @@ nav .nav-container {
   height: 100%;
 }
 nav .nav-container a {
+  display: block;
   text-align: center;
-  padding: 20px;
-  font-size: 48px;
-  color: #51b4b9;
-  font-weight: bold;
-  display: none;
+  padding: 30px 10px;
+  font-size: 60px;
+  letter-spacing: 10px;
+  font-family: 'tr2ntr2n';
+  transition: all .4s ease;
+}
+nav .nav-container a.blue {
+  color: #2afeff;
+  text-shadow: 0 0 10px #2afeff;
+}
+nav .nav-container a.orange {
+  color: #ff6633;
+  text-shadow: 0 0 10px #ff6633;
+  animation: myAnim 2s infinite ease-in;
+}
+nav .nav-container a:hover {
+  animation: shake 1s infinite both;
+  text-shadow: 0 0 230px;
+}
+@-webkit-keyframes myAnim {
+  0% {
+    opacity: 1;
+  }
+  5% {
+    opacity: .1;
+  }
+  10% {
+    opacity: .4;
+  }
+  15% {
+    opacity: .3;
+  }
+  20% {
+    opacity: 1;
+  }
+  25% {
+    opacity: .2;
+  }
+  29% {
+    opacity: 1;
+  }
+}
+@keyframes shake {
+  0%,
+  40%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50%,
+  70%,
+  90% {
+    transform: translate3d(-10px, 0, 0);
+  }
+  60%,
+  80% {
+    transform: translate3d(10px, 0, 0);
+  }
 }
