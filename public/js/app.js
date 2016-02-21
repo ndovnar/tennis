@@ -102,7 +102,7 @@ jQuery(function ($) {
             clientIo.socket.emit('keyEvents', keyEvents);
         }
 
-        $('body').css({'background-position': ss + 'px ' + dd + 'px'})
+        //$('body').css({'background-position': ss + 'px ' + dd + 'px'})
     }
 
     loop();
