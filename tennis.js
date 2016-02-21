@@ -88,7 +88,6 @@ function createRoom(data) {
     else {
 
         //************ test
-/*
         this.join(data);
         this.myRoom = data;
         if (rooms[data].tennis.entity.playerOne.id == undefined) {
@@ -96,7 +95,7 @@ function createRoom(data) {
         }
         else if (rooms[data].tennis.entity.playerTwo.id == undefined) {
             rooms[data].tennis.entity.playerTwo.id = this.id;
-        }*/
+        }
 
         //************* /test
 
