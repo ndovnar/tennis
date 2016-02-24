@@ -54,7 +54,7 @@ jQuery(function ($) {
             $(canvas).addClass('playerTwo');
         };
         ClientIo.prototype.entity = function (data) {
-            app.entity = data;
+            app.entity = JSON.parse(data);
         };
 
         return ClientIo;

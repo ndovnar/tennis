@@ -628,7 +628,7 @@ var Tennis = (function () {
             }
         };
 
-        io.to(this.room).emit('entity', entityPos);
+        io.to(this.room).emit('entity', JSON.stringify(entityPos));
 
     };
     Tennis.prototype.loop = function (deltaTime) {
