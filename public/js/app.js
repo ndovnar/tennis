@@ -47,9 +47,11 @@ jQuery(function ($) {
 
         ClientIo.prototype.playerOneConnect = function () {
             $(canvas).addClass('rotate');
+            $(canvas).addClass('playerOne');
         };
         ClientIo.prototype.playerTwoConnect = function () {
             $(canvas).removeClass('rotate');
+            $(canvas).addClass('playerTwo');
         };
         ClientIo.prototype.entity = function (data) {
             app.entity = data;
