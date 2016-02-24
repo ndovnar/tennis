@@ -1,181 +1,3 @@
-var io, serverSocket, ioRooms;
-var timer = require('animitter');
-
-
-// this.id **session id
-// io.sockets.adapter.rooms  **rooms list
-
-
-
-exports.initGame = function (serverIo, socket) {
-
-    io = serverIo;
-    serverSocket = socket;
-    ioRooms = io.sockets.adapter.rooms;
-
-    serverSocket.emit('connected');
-    serverSocket.on('createRoom', createRoom);
-    serverSocket.on('joinRoom', joinRoom);
-    serverSocket.on('keyEvents', keyEvents);
-    serverSocket.on('disconnect', disconnect);
-
-    setTimeout(function(){
-        serverSocket.emit('test',Date.now());
-    },1000);
-
-
-    /*test*/
-
-    /*io.sockets.clients(someRoom).forEach(function(s){
-     s.leave(someRoom);
-     });*/
-
-
-    /*test*/
-};
-
-var rooms = {};
-
-timer(function (deltaTime, elapsedTime, frameCount) {
-
-    for (var key in rooms) {
-        rooms[key].tennis.loop(deltaTime);
-    }
-
-}).start();
-
-
-function createRoom(data) {
-
-    // if room does not exist - create room from id data
-    if (rooms[data] === undefined) {
-
-        //if the client is already in the room
-        for (var key in this.rooms) {
-
-            if (key !== this.id) {
-                console.log('Вы уже находитесь в комнате');
-
-                return false
-            }
-
-        }
-
-        rooms[data] = {};
-
-        rooms[data].tennis = new Tennis(data);
-
-        this.myRoom = data;
-
-        rooms[data].tennis.entity.playerOne.id = this.id;
-
-        serverSocket.emit('playerOneConnect');
-
-        serverSocket.join(data);
-
-    }
-
-    // if the room already exists
-    else {
-
-        console.log(data + ' уже существует введите другое имя');
-
-    }
-
-}
-
-
-function joinRoom(data) {
-
-    //if the client is already in the room
-    for (var key in this.rooms) {
-
-        if (key !== this.id) {
-            console.log('Вы уже находитесь в комнате');
-
-            return false
-        }
-
-    }
-
-    //if data id from in rooms list there join room
-    if (ioRooms[data] !== undefined && ioRooms[data].length < 2) {
-
-        this.join(data);
-
-        if (rooms[data].tennis.entity.playerOne.id == undefined) {
-
-            rooms[data].tennis.entity.playerOne.id = this.id;
-
-            serverSocket.emit('playerOneConnect');
-
-        }
-
-        else if (rooms[data].tennis.entity.playerTwo.id == undefined) {
-
-            rooms[data].tennis.entity.playerTwo.id = this.id;
-
-            serverSocket.emit('playerTwoConnect');
-
-        }
-
-    }
-
-    else {
-
-        console.log(data + ' такой комнаты не существует');
-
-    }
-
-
-}
-
-function keyEvents(data) {
-    /*for (var key in this.adapter.rooms) {
-     if (key !== this.id) {
-     var roomTennis = rooms[key].tennis;
-     if (roomTennis.entity.playerOne.id === this.id) {
-     console.log('playerTwo');
-     roomTennis.entity.playerOne.control = data
-     }
-     else if (roomTennis.entity.playerTwo.id === this.id) {
-     //console.log('playerTwo');
-     roomTennis.entity.playerTwo.control = data
-     }
-     }
-     }*/
-
-    for (var key in rooms) {
-        if (io.sockets.adapter.rooms[key].sockets[this.id]) {
-            var roomTennis = rooms[key].tennis;
-            if (roomTennis.entity.playerOne.id === this.id) {
-                roomTennis.entity.playerOne.control = data
-            }
-            else if (roomTennis.entity.playerTwo.id === this.id) {
-                roomTennis.entity.playerTwo.control = data
-            }
-        }
-    }
-}
-
-function disconnect() {
-    if (this.myRoom !== undefined) {
-
-        if (!io.sockets.adapter.rooms[this.myRoom]) {
-            delete rooms[this.myRoom];
-        }
-
-        else if (rooms[this.myRoom].tennis.entity.playerOne.id == this.id) {
-            rooms[this.myRoom].tennis.entity.playerOne.id = undefined;
-        }
-        else if (rooms[this.myRoom].tennis.entity.playerTwo.id == this.id) {
-            rooms[this.myRoom].tennis.entity.playerTwo.id = undefined;
-        }
-
-    }
-
-}
-
 var Tennis = (function () {
 
 
@@ -611,36 +433,51 @@ var Tennis = (function () {
         this.entity.playerTwo.update();
     };
     Tennis.prototype.emitData = function () {
-        var entityPos = {
-            ball: {
-                radius: this.entity.ball.radius,
-                position: this.entity.ball.position
-            },
-            playerOne: {
-                width: this.entity.playerOne.width,
-                height: this.entity.playerOne.height,
-                position: this.entity.playerOne.position
-            },
-            playerTwo: {
-                width: this.entity.playerTwo.width,
-                height: this.entity.playerTwo.height,
-                position: this.entity.playerTwo.position
-            }
-        };
-
-        io.to(this.room).emit('entity', entityPos);
-
+        //io.to(this.room).emit('entity', entity);
     };
     Tennis.prototype.loop = function (deltaTime) {
-
         if (deltaTime) {
             this.dt = deltaTime / 1000;
         }
         this.update();
-        this.emitData();
 
+        this.emitData();
+        var self = this;
+
+        var timer = setTimeout(function () {
+            self.loop();
+        }, 1000 / 60);
+
+
+        //timer();
     };
 
 
     return Tennis;
 })();
+
+
+var tennis = new Tennis();
+
+var canvas = document.getElementById('myCanvas');
+var ctx = canvas.getContext('2d');
+
+function draw() {
+    ctx.clearRect(0, 0, 2000, 2000);
+    ctx.beginPath();
+    ctx.arc(tennis.entity.ball.position.x, tennis.entity.ball.position.y, tennis.entity.ball.radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.stroke();
+    //ctx.clearRect(0, 0, 2000, 2000);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(tennis.entity.playerOne.position.x, tennis.entity.playerOne.position.y, tennis.entity.playerOne.width, tennis.entity.playerOne.height);
+    ctx.fillRect(tennis.entity.playerTwo.position.x, tennis.entity.playerTwo.position.y, tennis.entity.playerTwo.width, tennis.entity.playerTwo.height);
+}
+
+var loop = function () {
+    draw();
+    requestAnimationFrame(loop);
+};
+
+loop();

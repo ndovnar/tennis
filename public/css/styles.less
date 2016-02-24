@@ -24,7 +24,7 @@ a {
     left: 0;
 }
 
-#myCanvas {
+#tennis {
     //display: none;
     position: relative;
     height: 96%;
@@ -32,6 +32,9 @@ a {
     border: solid 1px @color-2;
     box-shadow: inset 0 0 12px @color-2 , 0 0 12px  @color-2;
     //transform: rotateX(30deg) translateY(-120px);
+    &.rotate {
+        transform: rotateX(180deg);
+    }
 }
 
 body {
@@ -62,7 +65,7 @@ nav {
             letter-spacing: 10px;
             font-family: 'tr2ntr2n';
             transition: all .4s ease;
-            &.blue{
+            &.blue {
                 color: @color-1;
                 text-shadow: 0 0 10px @color-1;
             }
@@ -71,38 +74,36 @@ nav {
                 text-shadow: 0 0 10px @color-2;
                 animation: myAnim 2s infinite ease-in;
             }
-            &:hover{
+            &:hover {
                 animation: shake 1s infinite both;
-                text-shadow:0 0 230px;
+                text-shadow: 0 0 230px;
             }
 
-
-
-
         }
+
     }
 }
 
 @-webkit-keyframes myAnim {
-    0%{
+    0% {
         opacity: 1;
     }
-    5%{
+    5% {
         opacity: .1;
     }
-    10%{
+    10% {
         opacity: .4;
     }
-    15%{
+    15% {
         opacity: .3;
     }
-    20%{
+    20% {
         opacity: 1;
     }
-    25%{
+    25% {
         opacity: .2;
     }
-    29%{
+    29% {
         opacity: 1;
     }
 }

@@ -1,43 +1,12 @@
 ;
 jQuery(function ($) {
     //clientIo.socket.id  client session id
-    var entity = undefined;
 
-    var keyEvents = {left: false, right: false};
+    //var entity = undefined;
 
-    function keySet(e, state) {
-        var key = e.keyCode;
 
-        if (key == 37 || key == 39 || key == 32) {
-
-            e.preventDefault();
-
-            switch (key) {
-
-                case 37:
-                    key = 'left';
-                    break;
-                case 39:
-                    key = 'right';
-                    break;
-
-                case 32:
-                    key = 'space';
-                    break;
-
-            }
-
-            keyEvents[key] = state;
-
-        }
-    }
-
-    $(document).keydown(function (e) {
-        keySet(e, true);
-    });
-    $(document).keyup(function (e) {
-        keySet(e, false);
-    });
+    var canvas = document.getElementById('tennis');
+    var ctx = canvas.getContext('2d');
 
     var ClientIo = (function () {
         function ClientIo() {
@@ -52,60 +21,145 @@ jQuery(function ($) {
         ClientIo.prototype.bindEvents = function () {
             this.socket.on('connected', this.onConnected.bind(this));
             this.socket.on('entity', this.entity.bind(this));
+            this.socket.on('playerOneConnect', this.playerOneConnect.bind(this));
+            this.socket.on('playerTwoConnect', this.playerTwoConnect.bind(this));
+
+            this.socket.on('test', function (data) {
+                console.log(Date.now()-data);
+            })
+
         };
 
         ClientIo.prototype.onConnected = function () {
-            this.socket.emit('createRoom', 'room2');
-            //this.socket.emit('joinRoom','room2')
+
         };
 
         ClientIo.prototype.createRoom = function (roomName) {
             this.socket.emit('createRoom', roomName);
         };
+        ClientIo.prototype.joinRoom = function (roomName) {
+            this.socket.emit('joinRoom', roomName);
+        };
 
+        ClientIo.prototype.emitKeyEvents = function (data) {
+            this.socket.emit('keyEvents', data);
+        };
+
+        ClientIo.prototype.playerOneConnect = function () {
+            $(canvas).addClass('rotate');
+        };
+        ClientIo.prototype.playerTwoConnect = function () {
+            $(canvas).removeClass('rotate');
+        };
         ClientIo.prototype.entity = function (data) {
-            entity = data;
+            app.entity = data;
         };
 
         return ClientIo;
     })();
 
-    var clientIo = new ClientIo();
+    var App = (function () {
 
+        var keyEvents = {
+            left: false,
+            right: false,
+            space: false
+        };
 
-    var canvas = document.getElementById('myCanvas');
-    var ctx = canvas.getContext('2d');
+        function App() {
+            this.entity = undefined;
 
-
-    function draw() {
-        ctx.clearRect(0, 0, 2000, 2000);
-        ctx.beginPath();
-        ctx.arc(entity.ball.position.x, entity.ball.position.y, entity.ball.radius, 0, 2 * Math.PI, false);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.stroke();
-        //ctx.clearRect(0, 0, 2000, 2000);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(entity.playerOne.position.x, entity.playerOne.position.y, entity.playerOne.width, entity.playerOne.height);
-        ctx.fillRect(entity.playerTwo.position.x, entity.playerTwo.position.y, entity.playerTwo.width, entity.playerTwo.height);
-    }
-
-    var ss = 15;
-    var dd = 15;
-
-    function loop() {
-        ss += 1;
-        dd += 1;
-        requestAnimationFrame(loop);
-        if (entity !== undefined) {
-            draw();
-            clientIo.socket.emit('keyEvents', keyEvents);
+            this.init();
+            this.loop();
         }
 
-        //$('body').css({'background-position': ss + 'px ' + dd + 'px'})
-    }
+        App.prototype.init = function () {
+            this.bindEvents();
+        };
 
-    loop();
+
+        App.prototype.bindEvents = function () {
+            $(document).on('click', '.new-game', this.newGame);
+            $(document).on('click', '.join-game', this.joinGame);
+            $(document).on('keydown', this.keySet);
+            $(document).on('keyup', this.keySet);
+        };
+
+
+        App.prototype.newGame = function (e) {
+            e.preventDefault();
+            var gameName = prompt('');
+            clientIo.createRoom(gameName);
+        };
+
+        App.prototype.joinGame = function (e) {
+            e.preventDefault();
+            var gameName = prompt('');
+            clientIo.joinRoom(gameName);
+        };
+
+        App.prototype.keySet = function (e) {
+
+            var key = e.keyCode,
+                state = (e.type == 'keydown') ? true : false;
+
+
+            if (key == 37 || key == 39 || key == 32) {
+
+                e.preventDefault();
+
+                switch (key) {
+
+                    case 37:
+                        key = 'left';
+                        break;
+                    case 39:
+                        key = 'right';
+                        break;
+
+                    case 32:
+                        key = 'space';
+                        break;
+
+                }
+
+                keyEvents[key] = state;
+
+                clientIo.emitKeyEvents(keyEvents);
+
+            }
+        };
+
+        App.prototype.loop = function () {
+            requestAnimationFrame(this.loop.bind(this));
+
+            if (this.entity !== undefined) {
+                this.draw();
+            }
+
+        };
+
+        App.prototype.draw = function () {
+            ctx.clearRect(0, 0, 2000, 2000);
+            ctx.beginPath();
+            ctx.arc(this.entity.ball.position.x, this.entity.ball.position.y, this.entity.ball.radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.stroke();
+            //ctx.clearRect(0, 0, 2000, 2000);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(this.entity.playerOne.position.x, this.entity.playerOne.position.y, this.entity.playerOne.width, this.entity.playerOne.height);
+            ctx.fillRect(this.entity.playerTwo.position.x, this.entity.playerTwo.position.y, this.entity.playerTwo.width, this.entity.playerTwo.height);
+        };
+
+        return App;
+    })();
+
+    var clientIo = new ClientIo();
+
+    var app = new App();
+
+
 
 
 }($));
