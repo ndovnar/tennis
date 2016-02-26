@@ -22,6 +22,8 @@ exports.initGame = function (serverIo, socket) {
 
     ioRooms = io.sockets.adapter.rooms;
 
+    serverSocket.emit('test',Date.now());
+
     serverSocket.emit('connected');
     serverSocket.on('createRoom', createRoom);
     serverSocket.on('joinRoom', joinRoom);
