@@ -28,6 +28,7 @@ jQuery(function ($) {
             this.socket.on('playerTwoConnect', this.playerTwoConnect.bind(this));
 
             this.socket.on('test', function (data) {
+                console.log(Date.now() - data);
                 console.log(Date.now() + ' serverTime: ' + data);
             })
 
