@@ -1,5 +1,8 @@
 ;
 jQuery(function ($) {
+
+
+
     //clientIo.socket.id  client session id
 
     //var entity = undefined;
@@ -24,14 +27,21 @@ jQuery(function ($) {
             this.socket.on('playerOneConnect', this.playerOneConnect.bind(this));
             this.socket.on('playerTwoConnect', this.playerTwoConnect.bind(this));
 
+            this.socket.on('s',function(){
+                console.log('ss');
+            });
+            this.socket.on('ss',function(){
+                console.log('dd');
+            });
+
             this.socket.on('test', function (data) {
-                console.log(Date.now()+ ' serverTime: ' + data );
+                console.log(Date.now() + ' serverTime: ' + data);
             })
 
         };
 
         ClientIo.prototype.onConnected = function () {
-
+            console.log(clientIo.socket.id);
         };
 
         ClientIo.prototype.createRoom = function (roomName) {
@@ -81,6 +91,7 @@ jQuery(function ($) {
 
 
         App.prototype.bindEvents = function () {
+            $(window).on('blur', this.keySet);
             $(document).on('click', '.new-game', this.newGame);
             $(document).on('click', '.join-game', this.joinGame);
             $(document).on('keydown', this.keySet);
@@ -101,6 +112,17 @@ jQuery(function ($) {
         };
 
         App.prototype.keySet = function (e) {
+
+            if (e.type === 'blur') {
+
+                for (var key in keyEvents) {
+                    keyEvents[key] = false
+                }
+
+                clientIo.emitKeyEvents(keyEvents);
+
+                return false;
+            }
 
             var key = e.keyCode,
                 state = (e.type == 'keydown') ? true : false;
@@ -126,11 +148,11 @@ jQuery(function ($) {
                 }
 
                 keyEvents[key] = state;
-
                 clientIo.emitKeyEvents(keyEvents);
-
             }
+
         };
+
 
         App.prototype.loop = function () {
             requestAnimationFrame(this.loop.bind(this));
@@ -160,8 +182,6 @@ jQuery(function ($) {
     var clientIo = new ClientIo();
 
     var app = new App();
-
-
 
 
 }($));
