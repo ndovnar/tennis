@@ -30,7 +30,7 @@ a {
 }
 body {
   margin: 0;
-  background: url('../img/bg-pattern.jpg');
+  background: url('../img/bg-pattern.jpg') center center;
   color: #2afeff;
   font-size: 14px;
   font-family: 'Open-sans', sans-serif;
@@ -49,7 +49,7 @@ nav .nav-container a {
   display: block;
   text-align: center;
   padding: 30px 10px;
-  font-size: 60px;
+  font-size: 52px;
   letter-spacing: 10px;
   font-family: 'tr2ntr2n';
   transition: all .4s ease;

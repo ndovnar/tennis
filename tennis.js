@@ -191,7 +191,7 @@ exports.initGame = function (serverIo, socket) {
                 this.tennis = tennis;
                 this.speed = 500;
                 this.size = 20;
-                this.magicalNumber = 10;
+                this.magicalNumber = 7;
                 this.radius = this.size / 2;
                 this.vector = {
                     x: this.speed,
@@ -533,8 +533,8 @@ exports.initGame = function (serverIo, socket) {
             function Racket(player, tennis) {
                 this.tennis = tennis;
                 this.id = undefined;
-                this.width = 150;
-                this.height = 28;
+                this.width = 254;
+                this.height = 40;
                 this.speed = 10;
                 this.offset = 70;
 

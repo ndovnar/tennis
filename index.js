@@ -15,4 +15,5 @@ var server = require('http').createServer(app).listen(process.env.PORT || 8080),
 
 io.sockets.on('connection', function (socket) {
     tennis.initGame(io, socket);
+
 });
