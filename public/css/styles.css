@@ -30,7 +30,7 @@ a {
 }
 body {
   margin: 0;
-  background: url('../img/bg-pattern.jpg') center center;
+  background: url('../img/bg-pattern.jpg');
   color: #2afeff;
   font-size: 14px;
   font-family: 'Open-sans', sans-serif;

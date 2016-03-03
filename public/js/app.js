@@ -9,6 +9,7 @@ jQuery(function ($) {
     var canvas = document.getElementById('tennis'),
         ctx = canvas.getContext('2d');
 
+
     var ClientIo = (function () {
         function ClientIo() {
             this.init();
@@ -93,7 +94,7 @@ jQuery(function ($) {
             this.bindEvents();
 
             this.imageLoader = new ImageLoader({
-                imageArray: ['../img/racket-sprites.png', '../img/racket-sprites-2.png'],
+                imageArray: ['../img/racket.png', '../img/racket-1.png'],
                 callbacks: [this.createEntity.bind(this), this.loop.bind(this)]
             });
 
@@ -181,7 +182,15 @@ jQuery(function ($) {
         };
 
         App.prototype.render = function () {
-            ctx.clearRect(0, 0, 2000, 2000);
+            //$('body').css('background-position', this.entity.ball.position.x+'px',this.entity.ball.position.y+'px');
+            $('body').css({backgroundPosition: ' ' + (50) + 'px ' + this.entity.ball.position.y/10 + 'px'});
+
+            ctx.clearRect(0, 0, 2000, 5000);
+            ctx.fillRect(this.entity.playerOne.position.x, 0, this.entity.playerOne.width, this.entity.playerOne.height);
+            //console.log();
+            ctx.save();
+            ctx.translate(0, -this.entity.ball.position.y / 2);
+
             ctx.beginPath();
             ctx.fillStyle = '#fff';
 
@@ -195,6 +204,7 @@ jQuery(function ($) {
 
 
             ctx.closePath();
+            ctx.restore();
 
 
         };
@@ -212,7 +222,9 @@ jQuery(function ($) {
 
             this.lastTime = now;
 
+
             requestAnimationFrame(this.loop.bind(this));
+
 
         };
 
@@ -257,10 +269,10 @@ jQuery(function ($) {
             this.height = undefined;
 
             if (player === 'playerOne') {
-                this.sprite = new Sprite(this.App, this.position, [0, -45],'../img/racket-sprites.png', [254, 85], 65, [0, 1, 2, 1, 2, 3, 2], 'vertical');
+                this.sprite = new Sprite(this.App, this.position, [0, -5], '../img/racket-1.png', [600, 130], [250, 56], 10, [0], 'vertical');
             }
-            else {
-                this.sprite = new Sprite(this.App, this.position, [0, 0], '../img/racket-sprites-2.png', [254, 85], 65, [0, 1, 2, 1, 2, 3, 2], 'vertical');
+            else if (player === 'playerTwo') {
+                this.sprite = new Sprite(this.App, this.position, [0, -3], '../img/racket.png', [600, 130], [250, 56], 10, [0], 'vertical');
             }
 
             this.App.updateEntity.push(this.update.bind(this));
@@ -272,11 +284,13 @@ jQuery(function ($) {
             this.position = this.App.entity[this.player].position;
             this.width = this.App.entity[this.player].width;
             this.height = this.App.entity[this.player].height;
-            this.sprite.update(this.position, [this.width, this.height]);
+            this.sprite.update(this.position);
         };
 
         Racket.prototype.render = function () {
             this.sprite.render();
+
+
         };
 
         return Racket;
@@ -284,13 +298,14 @@ jQuery(function ($) {
     })();
 
     var Sprite = (function () {
-        function Sprite(App, position, positionImage, url, size, speed, frames, dir, once) {
+        function Sprite(App, position, positionImage, url, size, sizeOutputImage, speed, frames, dir, once) {
             this.App = App;
 
             this.url = url;
             this.position = position;
             this.positionImage = positionImage || [0, 0];
             this.size = size;
+            this.sizeOutputImage = sizeOutputImage;
             this.speed = speed;
             this.frames = frames;
             this.dir = dir || 'horizontal';
@@ -299,10 +314,10 @@ jQuery(function ($) {
 
         }
 
-        Sprite.prototype.update = function (position) {
+        Sprite.prototype.update = function (position, sizeOutputImage) {
 
             this.position = position;
-
+            this.sizeOutputImage = sizeOutputImage || this.sizeOutputImage;
             this.index += this.speed * this.App.dt;
 
         };
@@ -355,7 +370,7 @@ jQuery(function ($) {
                 x, y,
                 this.size[0], this.size[1],
                 this.position.x + this.positionImage[0], this.position.y + this.positionImage[1],
-                this.size[0], this.size[1]);
+                this.sizeOutputImage[0], this.sizeOutputImage[1]);
 
         };
 
