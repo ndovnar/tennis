@@ -89,6 +89,8 @@ exports.initGame = function (serverIo, socket) {
 
             this.join(data);
 
+            this.myRoom = data;
+
             if (rooms[data].tennis.entity.playerOne.id == undefined) {
 
                 rooms[data].tennis.entity.playerOne.id = this.id;
@@ -135,16 +137,17 @@ exports.initGame = function (serverIo, socket) {
             if (io.sockets.adapter.rooms[key].sockets[this.id]) {
                 var roomTennis = rooms[key].tennis;
                 if (roomTennis.entity.playerOne.id === this.id) {
-                    roomTennis.entity.playerOne.control = data
+                    roomTennis.entity.playerOne.keyEvents = data
                 }
                 else if (roomTennis.entity.playerTwo.id === this.id) {
-                    roomTennis.entity.playerTwo.control = data
+                    roomTennis.entity.playerTwo.keyEvents = data
                 }
             }
         }
     }
 
     function disconnect() {
+        console.log(this.myRoom);
         if (this.myRoom !== undefined) {
 
             if (!io.sockets.adapter.rooms[this.myRoom]) {
@@ -155,6 +158,7 @@ exports.initGame = function (serverIo, socket) {
                 rooms[this.myRoom].tennis.entity.playerOne.id = undefined;
             }
             else if (rooms[this.myRoom].tennis.entity.playerTwo.id == this.id) {
+
                 rooms[this.myRoom].tennis.entity.playerTwo.id = undefined;
             }
 
@@ -180,7 +184,7 @@ exports.initGame = function (serverIo, socket) {
                 //this.width = 1150;
                 //this.height = 1080;
                 this.width = 1920;
-                this.height = 2160;
+                this.height = 1080;
 
             }
 
@@ -535,8 +539,8 @@ exports.initGame = function (serverIo, socket) {
             function Racket(player, tennis) {
                 this.tennis = tennis;
                 this.id = undefined;
-                this.width = 200;
-                this.height = 44;
+                this.width = 250;
+                this.height = 56;
                 this.speed = 10;
                 this.offset = 70;
 
@@ -544,9 +548,10 @@ exports.initGame = function (serverIo, socket) {
                     x: 0,
                     y: 0
                 };
-                this.control = {
+                this.keyEvents = {
                     left: false,
-                    right: false
+                    right: false,
+                    space: false
                 };
                 if (player === 'playerOne') {
                     this.position.y = this.offset;
@@ -562,14 +567,14 @@ exports.initGame = function (serverIo, socket) {
             }
 
             Racket.prototype.update = function () {
-                if (this.control.left) {
+                if (this.keyEvents.left) {
                     this.position.x -= this.speed;
                     if (this.position.x < 0) {
                         this.position.x = 0;
                         return false;
                     }
                 }
-                if (this.control.right) {
+                if (this.keyEvents.right) {
                     this.position.x += this.speed;
                     if (this.position.x + this.width > this.tennis.entity.field.width) {
                         this.position.x = this.tennis.entity.field.width - this.width;
@@ -608,12 +613,14 @@ exports.initGame = function (serverIo, socket) {
                 playerOne: {
                     width: this.entity.playerOne.width,
                     height: this.entity.playerOne.height,
-                    position: this.entity.playerOne.position
+                    position: this.entity.playerOne.position,
+                    keyEvents: this.entity.playerOne.keyEvents
                 },
                 playerTwo: {
                     width: this.entity.playerTwo.width,
                     height: this.entity.playerTwo.height,
-                    position: this.entity.playerTwo.position
+                    position: this.entity.playerTwo.position,
+                    keyEvents: this.entity.playerTwo.keyEvents
                 }
             };
 

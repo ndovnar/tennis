@@ -1,45 +1,17 @@
 var canvas = document.getElementById('tennis'),
     ctx = canvas.getContext('2d');
+//1920x1080
+var canvasWidth = 1920;
+var canvasHeight = 1080;
+ctx.fillStyle = '#fff';
 
+ctx.translate(canvasWidth / 2, canvasHeight / 2);
 
-var ball = {
-    size: 50,
-    speed: 5,
-    position: 1000,
+ctx.rotate(10 * Math.PI / 180);
 
-    update: function () {
-        this.position += this.speed;
-        if (this.position > 2000) {
-            console.log('ss');
-            this.speed = -this.speed;
-        }
-        if (this.position < 150) {
-            this.speed = -this.speed;
-        }
-    },
+ctx.translate(-canvasWidth / 2, -canvasHeight / 2);
 
-    render: function () {
-        ctx.save();
-        ctx.clearRect(0, 0, 5000, 5000);
-        ctx.translate(0, -this.position / 2 );
-
-        ctx.fillRect(500, 100, 200, 40);
-
-        ctx.fillRect(500, 2000, 200, 40);
-
-        ctx.fillRect(500, this.position, this.size, this.size);
-        ctx.restore();
-        //ctx.fillRect(500,this.position,this.size,this.size);
-    }
-
-};
-
-
-function loop() {
-    ctx.fillStyle = '#fff';
-    ball.update();
-    ball.render();
-    requestAnimationFrame(loop);
-}
-
-loop();
+ctx.fillRect(canvasWidth / 2 - 50, canvasHeight / 2 - 50, 100, 100);
+//ctx.translate(-canvasWidth / 2 - 50, -canvasHeight / 2 - 50);
+ctx.fillStyle = 'red';
+ctx.fillRect(canvasWidth / 2 - 10, canvasHeight / 2 - 10, 20, 20);
