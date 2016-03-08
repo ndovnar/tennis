@@ -89,7 +89,7 @@ jQuery(function ($) {
                 this.bindEvents();
 
                 this.imageLoader = new ImageLoader({
-                    imageArray: ['../img/racket.png', '../img/racket-1.png', '../img/engine.png', '../img/engine-1.png', '../img/test.png'],
+                    imageArray: ['../img/game-sprites.png', '../img/racket.png', '../img/racket-1.png', '../img/engine.png', '../img/engine-1.png', '../img/test.png', '../img/engine-test.png'],
                     callbacks: [this.createEntity.bind(this), this.loop.bind(this)]
                 });
 
@@ -228,6 +228,8 @@ jQuery(function ($) {
 
                 requestAnimationFrame(this.loop.bind(this));
 
+                //console.log(this.dt);
+
 
             };
 
@@ -278,10 +280,10 @@ jQuery(function ($) {
 
 
                 if (player === 'playerOne') {
-                    this.sprite = new Sprite(this.App.imageLoader.get('../img/racket-1.png'), this.position, [0, 0], [600, 130], [250, 56], 25, [0, 1, 2, 1, 0, 3, 4, 5, 4, 3], 'vertical');
+                    this.sprite = new Sprite(this.App.imageLoader.get('../img/game-sprites.png'), this.position, [0, 0], [0, 0], [600, 130], [250, 56], 25, [0, 1, 2, 1, 0, 3, 4, 5, 4, 3], 'vertical');
                 }
                 else if (player === 'playerTwo') {
-                    this.sprite = new Sprite(this.App.imageLoader.get('../img/racket.png'), this.position, [0, 0], [600, 130], [250, 56], 25, [0, 1, 2, 1, 0, 3, 4, 5, 4, 3], 'vertical');
+                    this.sprite = new Sprite(this.App.imageLoader.get('../img/game-sprites.png'), this.position, [0, 0], [600, 0], [600, 130], [250, 56], 25, [0, 1, 2, 1, 0, 3, 4, 5, 4, 3], 'vertical');
                 }
 
                 this.App.updateEntity.push(this.update.bind(this));
@@ -306,17 +308,9 @@ jQuery(function ($) {
 
             Racket.prototype.render = function () {
 
-                /*ctx.drawImage(testImage,
-                    0, 0,
-                    600, 130,
-                    this.position.x, this.position.y,
-                    250, 56);*/
-
-
                 this.engine.left.render();
                 this.engine.right.render();
                 this.sprite.render();
-
 
             };
 
@@ -328,13 +322,13 @@ jQuery(function ($) {
 
             function RacketEngine(Racket, location) {
 
-                this.MAX_ROTATE_ANGLE = 45;
+                this.MAX_ROTATE_ANGLE = 50;
 
                 this.Racket = Racket;
                 this.location = location;
                 this.speedRotate = 400;
-                this.width = 49;
-                this.height = 33;
+                this.width = 48;
+                this.height = 52;
                 this.angle = 0;
                 this.position = undefined;
                 this.sprite = undefined;
@@ -342,20 +336,19 @@ jQuery(function ($) {
 
                 if (this.Racket.player == 'playerOne') {
                     if (this.location == 'left') {
-                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/engine.png'), this.position, [4, 2], [116, 80], [49, 33], 1, [0], 'vertical');
+                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/game-sprites.png'), this.position, [10, -15], [0, 780], [116, 124], [48, 52], 20, [0, 1], 'vertical');
                     }
                     else if (this.location == 'right') {
-
-                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/engine-1.png'), this.position, [-4, 2], [116, 80], [49, 33], 1, [0], 'vertical');
+                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/game-sprites.png'), this.position, [-10, -15], [116, 780], [116, 124], [48, 52], 20, [0, 1], 'vertical');
                     }
                 }
 
                 if (this.Racket.player == 'playerTwo') {
                     if (this.location == 'left') {
-                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/engine.png'), this.position, [0, 30], [116, 80], [49, 33], 1, [0], 'vertical');
+                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/game-sprites.png'), this.position, [10, 18], [232, 780], [116, 124], [48, 52], 20, [0, 1], 'vertical');
                     }
                     else if (this.location == 'right') {
-                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/engine-1.png'), this.position, [4, 2], [116, 80], [49, 33], 1, [0], 'vertical');
+                        this.sprite = new Sprite(this.Racket.App.imageLoader.get('../img/game-sprites.png'), this.position, [-10, 18], [348, 780], [116, 124], [48, 52], 20, [0, 1], 'vertical');
                     }
                 }
 
@@ -363,68 +356,163 @@ jQuery(function ($) {
 
             RacketEngine.prototype.update = function (dt) {
 
-                if (this.Racket.player == 'playerOne') {
-                    if (this.location == 'left') {
 
-                        this.position = {
-                            x: this.Racket.position.x,
-                            y: this.Racket.position.y
-                        };
+                /* if (this.Racket.player == 'playerOne') {
+                 if (this.location == 'left') {
 
-                        if (this.Racket.keyEvents.right) {
-                            if (this.angle > -this.MAX_ROTATE_ANGLE) {
-                                this.angle -= this.speedRotate * this.Racket.App.dt;
-                            }
-                            else {
-                                this.angle = -this.MAX_ROTATE_ANGLE;
-                            }
+                 this.position = {
+                 x: this.Racket.position.x,
+                 y: this.Racket.position.y
+                 };
 
+                 if (this.Racket.keyEvents.right) {
+                 if (this.angle > -this.MAX_ROTATE_ANGLE) {
+                 this.angle -= this.speedRotate * this.Racket.App.dt;
+                 }
+                 else {
+                 this.angle = -this.MAX_ROTATE_ANGLE;
+                 }
+
+                 }
+                 else if (!this.Racket.keyEvents.right) {
+                 if (this.angle < 0) {
+                 this.angle += this.speedRotate * this.Racket.App.dt;
+                 }
+                 else {
+                 this.angle = 0;
+                 }
+
+                 }
+
+                 }
+                 else if (this.location == 'right') {
+
+                 this.position = {
+
+                 x: this.Racket.position.x + this.Racket.width - this.width,
+                 y: this.Racket.position.y
+
+                 };
+
+                 if (this.Racket.keyEvents.left) {
+                 if (this.angle < this.MAX_ROTATE_ANGLE) {
+                 this.angle += this.speedRotate * this.Racket.App.dt;
+                 }
+                 else {
+                 this.angle = this.MAX_ROTATE_ANGLE;
+                 }
+
+                 }
+                 else if (!this.Racket.keyEvents.left) {
+                 if (this.angle > 0) {
+                 this.angle -= this.speedRotate * this.Racket.App.dt;
+                 }
+
+                 else {
+                 this.angle = 0;
+                 }
+                 }
+
+
+                 }
+                 }*/
+
+
+                function rotateLeft(state) {
+
+                    if (state) {
+                        if (this.angle > -this.MAX_ROTATE_ANGLE) {
+                            this.angle -= this.speedRotate * this.Racket.App.dt;
                         }
-                        else if (!this.Racket.keyEvents.right) {
-                            if (this.angle < 0) {
-                                this.angle += this.speedRotate * this.Racket.App.dt;
-                            }
-                            else {
-                                this.angle = 0;
-                            }
-
+                        else {
+                            this.angle = -this.MAX_ROTATE_ANGLE;
                         }
 
                     }
-                    else if (this.location == 'right') {
-
-                        this.position = {
-
-                            x: this.Racket.position.x + this.Racket.width - this.width,
-                            y: this.Racket.position.y
-
-                        };
-
-                        if (this.Racket.keyEvents.left) {
-                            if (this.angle < this.MAX_ROTATE_ANGLE) {
-                                this.angle += this.speedRotate * this.Racket.App.dt;
-                            }
-                            else {
-                                this.angle = this.MAX_ROTATE_ANGLE;
-                            }
-
+                    else if (!state) {
+                        if (this.angle < 0) {
+                            this.angle += this.speedRotate * this.Racket.App.dt;
                         }
-                        else if (!this.Racket.keyEvents.left) {
-                            if (this.angle > 0) {
-                                this.angle -= this.speedRotate * this.Racket.App.dt;
-                            }
-
-                            else {
-                                this.angle = 0;
-                            }
+                        else {
+                            this.angle = 0;
                         }
-
 
                     }
                 }
+
+                function rotateRight(state) {
+                    if (state) {
+                        if (this.angle < this.MAX_ROTATE_ANGLE) {
+                            this.angle += this.speedRotate * this.Racket.App.dt;
+                        }
+                        else {
+                            this.angle = this.MAX_ROTATE_ANGLE;
+                        }
+
+                    }
+                    else {
+                        if (this.angle > 0) {
+                            this.angle -= this.speedRotate * this.Racket.App.dt;
+                        }
+
+                        else {
+                            this.angle = 0;
+                        }
+                    }
+                }
+
+                if (this.Racket.player == 'playerOne' && this.location == 'left' || this.Racket.player == 'playerTwo' && this.location == 'left') {
+                    this.position = {
+                        x: this.Racket.position.x,
+                        y: this.Racket.position.y
+                    };
+                }
+
+                if (this.Racket.player == 'playerOne' && this.location == 'right' || this.Racket.player == 'playerTwo' && this.location == 'right') {
+                    this.position = {
+                        x: this.Racket.position.x + this.Racket.width - this.width,
+                        y: this.Racket.position.y
+                    };
+
+                }
+
+                if (this.Racket.player == 'playerOne' && this.location == 'left' && this.Racket.keyEvents.right ||
+                    this.Racket.player == 'playerTwo' && this.location == 'right' && this.Racket.keyEvents.left
+                ) {
+                    rotateLeft.call(this, true);
+                }
+
+                else if (this.Racket.player == 'playerOne' && this.location == 'right' && this.Racket.keyEvents.left ||
+                    this.Racket.player == 'playerTwo' && this.location == 'left' && this.Racket.keyEvents.right
+                ) {
+                    rotateRight.call(this, true);
+                }
+
+                else if (this.Racket.player == 'playerOne' && this.location == 'right' && !this.Racket.keyEvents.left ||
+                    this.Racket.player == 'playerTwo' && this.location == 'left' && !this.Racket.keyEvents.right) {
+                    rotateRight.call(this, false);
+                }
+
+                else if (this.Racket.player == 'playerOne' && this.location == 'left' && !this.Racket.keyEvents.right ||
+                    this.Racket.player == 'playerTwo' && this.location == 'right' && !this.Racket.keyEvents.left
+                ) {
+                    rotateLeft.call(this, false);
+                }
+
+
                 else {
-                    this.position = this.Racket.position;
+                    /*if (this.location == 'right' && this.Racket.keyEvents.left) {
+                     self2.call(this, true);
+                     }
+
+                     else if (this.location == 'left' && !this.Racket.keyEvents.right) {
+                     self.call(this, false);
+                     }
+                     else if (this.location == 'right' && !this.Racket.keyEvents.left) {
+                     self2.call(this, false);
+                     }*/
                 }
+
                 this.sprite.update(dt, this.position);
             };
 
@@ -432,16 +520,18 @@ jQuery(function ($) {
 
                 ctx.save();
 
-                if (this.Racket.player == 'playerOne') {
+                if (this.Racket.player == 'playerOne' || this.Racket.player == 'playerTwo') {
 
                     ctx.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
 
                     ctx.rotate(this.angle * Math.PI / 180);
 
                     ctx.translate(-this.position.x - this.width / 2, -this.position.y - this.height / 2);
+
                 }
 
                 this.sprite.render();
+
 
                 ctx.restore();
 
@@ -453,13 +543,14 @@ jQuery(function ($) {
         })();
 
         var Sprite = (function () {
-            function Sprite(image, position, positionImage, size, sizeOutputImage, speed, frames, dir, once) {
+            function Sprite(image, position, positionImage, positionSprite, size, sizeOutputImage, speed, frames, dir, once) {
                 this.image = image;
 
 
                 this.dt = 0;
                 this.position = position;
                 this.positionImage = positionImage || [0, 0];
+                this.positionSprite = positionSprite || [0, 0];
                 this.size = size;
                 this.sizeOutputImage = sizeOutputImage;
                 this.speed = speed;
@@ -469,8 +560,6 @@ jQuery(function ($) {
 
                 this.index = 0;
                 this.frame = 0;
-                this.x = 0;
-                this.y = 0;
 
             }
 
@@ -501,8 +590,8 @@ jQuery(function ($) {
                     this.frame = 0;
                 }
 
-                this.x = 0;
-                this.y = 0;
+                this.x = this.positionSprite[0];
+                this.y = this.positionSprite[1];
 
                 if (this.dir = 'vertical') {
                     this.y += this.frame * this.size[1];
@@ -622,7 +711,6 @@ jQuery(function ($) {
         var clientIo = new ClientIo();
 
         var app = new App();
-
 
     }($)
 );
