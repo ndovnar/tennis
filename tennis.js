@@ -181,11 +181,8 @@ exports.initGame = function (serverIo, socket) {
         var Field = (function () {
             function Field(tennis) {
                 this.tennis = tennis;
-                //this.width = 1150;
-                //this.height = 1080;
-                this.width = 1920;
+                this.width = 1600;
                 this.height = 1080;
-
             }
 
             return Field;
@@ -196,7 +193,7 @@ exports.initGame = function (serverIo, socket) {
             function Ball(tennis) {
                 this.tennis = tennis;
                 this.speed = 500;
-                this.size = 20;
+                this.size = 26;
                 this.magicalNumber = 7;
                 this.radius = this.size / 2;
                 this.vector = {
@@ -541,7 +538,7 @@ exports.initGame = function (serverIo, socket) {
                 this.id = undefined;
                 this.width = 250;
                 this.height = 56;
-                this.speed = 10;
+                this.speed = 500;
                 this.offset = 70;
 
                 this.position = {
@@ -568,14 +565,14 @@ exports.initGame = function (serverIo, socket) {
 
             Racket.prototype.update = function () {
                 if (this.keyEvents.left) {
-                    this.position.x -= this.speed;
+                    this.position.x -= this.speed * this.tennis.dt;
                     if (this.position.x < 0) {
                         this.position.x = 0;
                         return false;
                     }
                 }
                 if (this.keyEvents.right) {
-                    this.position.x += this.speed;
+                    this.position.x += this.speed * this.tennis.dt;
                     if (this.position.x + this.width > this.tennis.entity.field.width) {
                         this.position.x = this.tennis.entity.field.width - this.width;
                         return false;

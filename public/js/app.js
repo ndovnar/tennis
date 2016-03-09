@@ -89,7 +89,7 @@ jQuery(function ($) {
                 this.bindEvents();
 
                 this.imageLoader = new ImageLoader({
-                    imageArray: ['../img/game-sprites.png', '../img/racket.png', '../img/racket-1.png', '../img/engine.png', '../img/engine-1.png', '../img/test.png', '../img/engine-test.png'],
+                    imageArray: ['../img/game-sprites.png', '../img/ball.png'],
                     callbacks: [this.createEntity.bind(this), this.loop.bind(this)]
                 });
 
@@ -197,7 +197,6 @@ jQuery(function ($) {
             App.prototype.render = function () {
 
                 ctx.clearRect(0, 0, 2000, 5000);
-                ctx.fillStyle = '#fff';
 
                 var i,
                     entityLength = this.renderEntity.length;
@@ -206,9 +205,6 @@ jQuery(function ($) {
                     this.renderEntity[i]();
                 }
 
-                ctx.beginPath();
-                ctx.fillStyle = '#fff';
-                ctx.closePath();
 
             };
 
@@ -228,9 +224,6 @@ jQuery(function ($) {
 
                 requestAnimationFrame(this.loop.bind(this));
 
-                //console.log(this.dt);
-
-
             };
 
 
@@ -242,6 +235,7 @@ jQuery(function ($) {
                 this.App = App;
                 this.position = undefined;
                 this.radius = undefined;
+                this.sprite = new Sprite(this.App.imageLoader.get('../img/game-sprites.png'), this.position, [-13, -13], [464, 780], [62, 62], [26, 26], 24, [0, 1, 2, 3]);
 
 
                 this.App.updateEntity.push(this.update.bind(this));
@@ -251,18 +245,17 @@ jQuery(function ($) {
             Ball.prototype.update = function () {
                 this.position = this.App.entity.ball.position;
                 this.radius = this.App.entity.ball.radius;
+                this.sprite.update(this.App.dt, this.position);
             };
 
             Ball.prototype.render = function () {
-                ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
-                ctx.fill();
+                this.sprite.render();
             };
 
             return Ball;
         })();
 
         var Racket = (function () {
-            var testImage;
 
             function Racket(App, player) {
                 this.App = App;
@@ -288,8 +281,6 @@ jQuery(function ($) {
 
                 this.App.updateEntity.push(this.update.bind(this));
                 this.App.renderEntity.push(this.render.bind(this));
-
-                testImage = this.App.imageLoader.get('../img/test.png');
 
             }
 
@@ -355,68 +346,6 @@ jQuery(function ($) {
             }
 
             RacketEngine.prototype.update = function (dt) {
-
-
-                /* if (this.Racket.player == 'playerOne') {
-                 if (this.location == 'left') {
-
-                 this.position = {
-                 x: this.Racket.position.x,
-                 y: this.Racket.position.y
-                 };
-
-                 if (this.Racket.keyEvents.right) {
-                 if (this.angle > -this.MAX_ROTATE_ANGLE) {
-                 this.angle -= this.speedRotate * this.Racket.App.dt;
-                 }
-                 else {
-                 this.angle = -this.MAX_ROTATE_ANGLE;
-                 }
-
-                 }
-                 else if (!this.Racket.keyEvents.right) {
-                 if (this.angle < 0) {
-                 this.angle += this.speedRotate * this.Racket.App.dt;
-                 }
-                 else {
-                 this.angle = 0;
-                 }
-
-                 }
-
-                 }
-                 else if (this.location == 'right') {
-
-                 this.position = {
-
-                 x: this.Racket.position.x + this.Racket.width - this.width,
-                 y: this.Racket.position.y
-
-                 };
-
-                 if (this.Racket.keyEvents.left) {
-                 if (this.angle < this.MAX_ROTATE_ANGLE) {
-                 this.angle += this.speedRotate * this.Racket.App.dt;
-                 }
-                 else {
-                 this.angle = this.MAX_ROTATE_ANGLE;
-                 }
-
-                 }
-                 else if (!this.Racket.keyEvents.left) {
-                 if (this.angle > 0) {
-                 this.angle -= this.speedRotate * this.Racket.App.dt;
-                 }
-
-                 else {
-                 this.angle = 0;
-                 }
-                 }
-
-
-                 }
-                 }*/
-
 
                 function rotateLeft(state) {
 
@@ -499,20 +428,6 @@ jQuery(function ($) {
                     rotateLeft.call(this, false);
                 }
 
-
-                else {
-                    /*if (this.location == 'right' && this.Racket.keyEvents.left) {
-                     self2.call(this, true);
-                     }
-
-                     else if (this.location == 'left' && !this.Racket.keyEvents.right) {
-                     self.call(this, false);
-                     }
-                     else if (this.location == 'right' && !this.Racket.keyEvents.left) {
-                     self2.call(this, false);
-                     }*/
-                }
-
                 this.sprite.update(dt, this.position);
             };
 
@@ -593,7 +508,7 @@ jQuery(function ($) {
                 this.x = this.positionSprite[0];
                 this.y = this.positionSprite[1];
 
-                if (this.dir = 'vertical') {
+                if (this.dir == 'vertical') {
                     this.y += this.frame * this.size[1];
                 }
                 else {
