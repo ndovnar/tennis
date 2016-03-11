@@ -6,8 +6,9 @@ jQuery(function ($) {
         //clientIo.socket.id  client session id
 
 
-        var canvas = document.getElementById('tennis'),
-            ctx = canvas.getContext('2d');
+        var canvas, ctx;
+        canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
+        ctx = $(canvas).get(0).getContext('2d');
 
 
         var ClientIo = (function () {
@@ -25,14 +26,16 @@ jQuery(function ($) {
                 this.socket.on('entity', this.entity.bind(this));
                 this.socket.on('playerOneConnect', this.playerOneConnect.bind(this));
                 this.socket.on('playerTwoConnect', this.playerTwoConnect.bind(this));
+                this.socket.on('playerConnect', this.playerConnect.bind(this));
+                this.socket.on('giveRoomsList', this.giveRoomsList.bind(this));
             };
 
             ClientIo.prototype.onConnected = function () {
-                this.createRoom('55');
+
             };
 
-            ClientIo.prototype.createRoom = function (roomName) {
-                this.socket.emit('createRoom', roomName);
+            ClientIo.prototype.createRoom = function (data) {
+                this.socket.emit('createRoom', data);
             };
             ClientIo.prototype.joinRoom = function (roomName) {
                 this.socket.emit('joinRoom', roomName);
@@ -45,16 +48,35 @@ jQuery(function ($) {
             ClientIo.prototype.playerOneConnect = function () {
                 $(canvas).addClass('rotate');
                 app.player = 'playerOne';
-                //$(canvas).addClass('playerOne');
             };
             ClientIo.prototype.playerTwoConnect = function () {
-                //$(canvas).addClass('playerTwo');
                 $(canvas).removeClass('rotate');
                 app.player = 'playerTwo';
+
             };
+            ClientIo.prototype.playerConnect = function (data) {
+                app.gameState = true;
+                window.location.hash = data;
+            };
+
+            ClientIo.prototype.leave = function () {
+                app.gameState = false;
+                this.socket.emit('leaveRoom');
+            };
+
             ClientIo.prototype.entity = function (data) {
                 app.entity = JSON.parse(data);
             };
+
+            ClientIo.prototype.getRoomsList = function () {
+                this.socket.emit('getRoomsList');
+            };
+
+            ClientIo.prototype.giveRoomsList = function (data) {
+                app.roomsList = data;
+                app.updateRoomList();
+            };
+
 
             return ClientIo;
         })();
@@ -72,6 +94,11 @@ jQuery(function ($) {
                 this.entity = undefined;
                 this.dt = undefined;
                 this.player = undefined;
+                this.nickName = undefined;
+                this.gameState = false;
+                this.pageState = undefined;
+
+                this.roomsList = [];
 
                 this.renderEntity = [];
                 this.updateEntity = [];
@@ -79,26 +106,28 @@ jQuery(function ($) {
 
                 this.lastTime = 0;
 
-                this.init();
-
-
             }
 
             App.prototype.init = function () {
-
+                this.changeAppState();
                 this.bindEvents();
+                this.nickName = undefined;
 
                 this.imageLoader = new ImageLoader({
                     imageArray: ['../img/game-sprites.png', '../img/ball.png'],
-                    callbacks: [this.createEntity.bind(this), this.loop.bind(this)]
+                    callbacks: [this.createEntity.bind(this)]
                 });
 
             };
 
 
             App.prototype.bindEvents = function () {
-                $(document).on('click', '.new-game', this.newGame);
-                $(document).on('click', '.join-game', this.joinGame);
+                $(document).on('click', '#NewGame', this.newGame);
+                //$(document).on('click', '.join-game', this.joinGame);
+                $(window).on('hashchange', this.changeAppState.bind(this));
+            };
+
+            App.prototype.bindGameEvents = function () {
                 $(window).on('blur', this.keySet);
                 $(document).on('keydown', this.keySet);
                 $(document).on('keyup', this.keySet);
@@ -112,16 +141,142 @@ jQuery(function ($) {
                 this.playerTwo = new Racket(this, 'playerTwo');
             };
 
+            App.prototype.changeAppState = function () {
+
+                var updateAppState = function (state) {
+
+
+                    $('.page').removeClass('remove-animation').addClass('add-animation');
+
+                    var url = state;
+                    var pageHtml = '';
+                    var callback = undefined;
+
+                    if (state.indexOf('Game') != 0) {
+                        clientIo.leave();
+                    }
+                    else if (state.slice(0, 4) == 'Game') {
+                        state = 'Game';
+                    }
+
+
+                    switch (state) {
+                        case 'Home':
+                            pageHtml =
+                                '<div class="container center">' +
+                                '<nav> ' +
+                                '<div class="nav-container"> ' +
+                                '<ul> ' +
+                                '<li><a class="link blue" href="#New_Game">New Game</a></li> ' +
+                                '<li><a class="link orange" href="#Join_Game">Join Game</a></li> ' +
+                                '</ul> ' +
+                                '</div> ' +
+                                '</nav>' +
+                                '</div>';
+
+                            break;
+                        case 'New_Game':
+                            pageHtml =
+                                '<div class="container center">' +
+                                '<div class="new-game">' +
+                                '<form>' +
+                                '<input type="text" name="nickName" placeholder="Your Nick Name">' +
+                                '<input type="text" name="gameName" placeholder="Game Name">' +
+                                '</form>' +
+
+                                '<a id="NewGame" href="#" class="link blue">Create Game</a>' +
+                                '</div>' +
+                                '</div>';
+                            break;
+                        case 'Join_Game':
+
+                            callback = clientIo.getRoomsList.bind(clientIo);
+                            pageHtml = '<div class="container center">Hello</div>';
+
+
+                            break;
+                        case 'Game':
+                            if (!this.gameState) {
+                                window.location.hash = 'Home';
+                                return;
+                            }
+
+                            pageHtml = '<div class="tennis-box"></div>';
+                            callback = function () {
+
+                                $('.tennis-box').append(canvas);
+
+                                this.bindGameEvents();
+                                this.loop();
+
+                            }.bind(this);
+                            break;
+
+
+                        default :
+                            pageHtml = '<div class="container center"> page ' + '"' + state + '"' + ' not found</div>';
+
+                    }
+
+
+                    location.hash = url;
+                    this.pageState = url;
+
+
+                    $('div.page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
+
+
+                        if ($('div.page').hasClass('remove-animation')) {
+
+                            $('.page').html(pageHtml);
+
+                            if (callback != undefined) {
+                                callback();
+                            }
+
+                        }
+
+                        $('.page').addClass('remove-animation');
+
+                    }).children().on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function (e) {
+                        e.stopPropagation();
+                    });
+
+
+                };
+
+                var urlHash = window.location.hash.substr(1);
+
+                if (urlHash != '') {
+                    updateAppState.call(this, urlHash);
+                }
+                else {
+                    updateAppState.call(this, 'Home');
+                }
+
+            };
+
+
             App.prototype.newGame = function (e) {
                 e.preventDefault();
-                var gameName = prompt('');
-                clientIo.createRoom(gameName);
+                var nickName = $('.new-game input[name="nickName"]').val();
+                var gameName = $('.new-game input[name="gameName"]').val();
+
+                this.nickName = nickName;
+
+                clientIo.createRoom({nickName: nickName, gameName: gameName});
             };
 
             App.prototype.joinGame = function (e) {
-                e.preventDefault();
-                var gameName = prompt('');
-                clientIo.joinRoom(gameName);
+
+            };
+
+            App.prototype.updateRoomList = function () {
+                if (this.pageState != 'Join_Game') {
+                    return;
+                }
+                var ss = JSON.stringify(this.roomsList);
+                $('.container').text(ss);
             };
 
             App.prototype.keySet = function (e) {
@@ -313,7 +468,7 @@ jQuery(function ($) {
 
             function RacketEngine(Racket, location) {
 
-                this.MAX_ROTATE_ANGLE = 50;
+                this.MAX_ROTATE_ANGLE = 70;
 
                 this.Racket = Racket;
                 this.location = location;
@@ -626,6 +781,10 @@ jQuery(function ($) {
         var clientIo = new ClientIo();
 
         var app = new App();
+
+        $(window).load(function () {
+            app.init();
+        });
 
     }($)
 );

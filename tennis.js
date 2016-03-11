@@ -29,13 +29,14 @@ exports.initGame = function (serverIo, socket) {
     serverSocket.on('joinRoom', joinRoom);
     serverSocket.on('keyEvents', keyEvents);
     serverSocket.on('disconnect', disconnect);
-
+    serverSocket.on('leaveRoom', disconnect);
+    serverSocket.on('getRoomsList', getRoomsList);
 
     function createRoom(data) {
-
-
         // if room does not exist - create room from id data
-        if (rooms[data] === undefined) {
+        data.gameName = 'Game_' + data.gameName;
+
+        if (rooms[data.gameName] === undefined) {
 
             //if the client is already in the room
             for (var key in this.rooms) {
@@ -48,17 +49,20 @@ exports.initGame = function (serverIo, socket) {
 
             }
 
-            rooms[data] = {};
+            rooms[data.gameName] = {};
 
-            rooms[data].tennis = new Tennis(data);
+            rooms[data.gameName].tennis = new Tennis(data.gameName);
 
-            this.myRoom = data;
+            this.myRoom = data.gameName;
 
-            rooms[data].tennis.entity.playerOne.id = this.id;
+            rooms[data.gameName].tennis.entity.playerOne.id = this.id;
+            rooms[data.gameName].players = 1;
 
             serverSocket.emit('playerOneConnect');
 
-            serverSocket.join(data);
+            serverSocket.emit('playerConnect', data.gameName);
+
+            serverSocket.join(data.gameName);
 
 
         }
@@ -66,9 +70,10 @@ exports.initGame = function (serverIo, socket) {
         // if the room already exists
         else {
 
-            console.log(data + ' уже существует введите другое имя');
+            console.log(data.gameName + ' уже существует введите другое имя');
 
         }
+
     }
 
     function joinRoom(data) {
@@ -85,7 +90,7 @@ exports.initGame = function (serverIo, socket) {
         }
 
         //if data id from in rooms list there join room
-        if (ioRooms[data] !== undefined && ioRooms[data].length < 2) {
+        if (rooms[data.gameName] !== undefined && rooms[data.gameName].players.length < 2) {
 
             this.join(data);
 
@@ -147,8 +152,12 @@ exports.initGame = function (serverIo, socket) {
     }
 
     function disconnect() {
-        console.log(this.myRoom);
-        if (this.myRoom !== undefined) {
+
+        if (this.myRoom !== undefined && rooms[this.myRoom] !== undefined) {
+            rooms[this.myRoom].players -= 1;
+
+            serverSocket.leave(this.myRoom);
+
 
             if (!io.sockets.adapter.rooms[this.myRoom]) {
                 delete rooms[this.myRoom];
@@ -162,9 +171,21 @@ exports.initGame = function (serverIo, socket) {
                 rooms[this.myRoom].tennis.entity.playerTwo.id = undefined;
             }
 
+
         }
 
     }
+
+    function getRoomsList() {
+        var roomsList = [];
+
+        for (var key in rooms) {
+            roomsList.push({roomName: key, players: rooms[key].players});
+        }
+
+
+        serverSocket.emit('giveRoomsList', roomsList)
+    };
 
     var Tennis = (function () {
 
