@@ -191,7 +191,7 @@ jQuery(function ($) {
                         case 'Join_Game':
 
                             callback = clientIo.getRoomsList.bind(clientIo);
-                            pageHtml = '<div class="container center">Hello</div>';
+                            pageHtml = '<div class="container center"></div>';
 
 
                             break;
