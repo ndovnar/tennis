@@ -123,7 +123,7 @@ jQuery(function ($) {
                 this.nickName = undefined;
 
                 this.imageLoader = new ImageLoader({
-                    imageArray: ['../img/game-sprites.png', '../img/ball.png'],
+                    imageArray: ['../img/game-sprites.png'],
                     callbacks: [this.createEntity.bind(this)]
                 });
 
