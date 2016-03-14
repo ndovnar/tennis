@@ -1,8 +1,6 @@
 var timer = require('animitter');
 
 var rooms = {};
-// this.id **session id
-// io.sockets.adapter.rooms  **rooms list
 
 timer(function (deltaTime, elapsedTime, frameCount) {
 
@@ -145,19 +143,6 @@ exports.initGame = function (serverIo, socket) {
     }
 
     function keyEvents(data) {
-        /*for (var key in this.adapter.rooms) {
-         if (key !== this.id) {
-         var roomTennis = rooms[key].tennis;
-         if (roomTennis.entity.playerOne.id === this.id) {
-         console.log('playerTwo');
-         roomTennis.entity.playerOne.control = data
-         }
-         else if (roomTennis.entity.playerTwo.id === this.id) {
-         //console.log('playerTwo');
-         roomTennis.entity.playerTwo.control = data
-         }
-         }
-         }*/
 
         for (var key in rooms) {
             if (io.sockets.adapter.rooms[key].sockets[this.id]) {
@@ -288,35 +273,6 @@ exports.initGame = function (serverIo, socket) {
                     //ball  hit the racket playerOne
                     var racketHitPlayerOne = function () {
 
-                        /* //the ball hit the left or right side of
-                         if (
-                         this.position.y >= this.tennis.entity.playerOne.position.y &&
-                         this.position.y <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height
-
-                         ) {
-
-                         // the ball hit the left side of
-                         if (
-                         this.position.x + this.radius >= this.tennis.entity.playerOne.position.x &&
-                         this.position.x <= this.tennis.entity.playerOne.position.x
-                         ) {
-                         this.vector.x = -this.speed;
-                         this.position.x = this.tennis.entity.playerOne.position.x - this.radius;
-                         //console.log('left rebro');
-                         return false
-                         }
-                         if (
-                         //the ball hit the right side of
-                         this.position.x - this.radius <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
-                         this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width
-                         ) {
-                         this.vector.x = this.speed;
-                         this.position.x = this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width + this.radius;
-                         //console.log('right rebro');
-                         return false
-                         }
-                         }*/
-
                         //the lower bound of the center side
                         if (
                             this.position.y - this.radius <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height &&
@@ -429,35 +385,6 @@ exports.initGame = function (serverIo, socket) {
 
                     //ball hit the racket playerTwo
                     var racketHitPlayerTwo = function () {
-
-                        /* //the ball hit the left or right side of
-                         if (
-                         this.position.y >= this.tennis.entity.playerTwo.position.y &&
-                         this.position.y <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height
-
-                         ) {
-
-                         // the ball hit the left side of
-                         if (
-                         this.position.x + this.radius >= this.tennis.entity.playerTwo.position.x &&
-                         this.position.x <= this.tennis.entity.playerTwo.position.x
-                         ) {
-                         this.vector.x = -this.speed;
-                         this.position.x = this.tennis.entity.playerTwo.position.x - this.radius;
-                         // console.log('left rebro');
-                         return false
-                         }
-                         if (
-                         //the ball hit the right side of
-                         this.position.x - this.radius <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
-                         this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width
-                         ) {
-                         this.vector.x = this.speed;
-                         this.position.x = this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width + this.radius;
-                         //console.log('right rebro');
-                         return false
-                         }
-                         }*/
 
                         // upper bound of the center side
                         if (
