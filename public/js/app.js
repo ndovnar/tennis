@@ -242,22 +242,18 @@ jQuery(function ($) {
                     }
 
 
-                    location.hash = url;
+                    window.location.hash = url;
                     this.pageState = url;
 
 
                     $('div.page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
 
+                        $('.page').html(pageHtml);
 
-                        if ($('div.page').hasClass('remove-animation')) {
-
-                            $('.page').html(pageHtml);
-
-                            if (callback != undefined) {
-                                callback();
-                            }
-
+                        if (callback != undefined) {
+                            callback();
                         }
+
 
                         $('.page').addClass('remove-animation');
 

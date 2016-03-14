@@ -648,6 +648,7 @@ exports.initGame = function (serverIo, socket) {
 
             }
 
+
             Racket.prototype.update = function () {
                 if (this.keyEvents.left) {
                     this.position.x -= this.speed * this.tennis.dt;
