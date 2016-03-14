@@ -12,17 +12,12 @@ timer(function (deltaTime, elapsedTime, frameCount) {
 
 }).start();
 
-
 exports.initGame = function (serverIo, socket) {
-    var io, serverSocket, ioRooms;
 
+    var io, serverSocket;
 
     io = serverIo;
     serverSocket = socket;
-
-    ioRooms = io.sockets.adapter.rooms;
-
-    serverSocket.emit('test', Date.now());
 
     serverSocket.emit('connected');
     serverSocket.on('createRoom', createRoom);
@@ -33,8 +28,13 @@ exports.initGame = function (serverIo, socket) {
     serverSocket.on('getRoomsList', getRoomsList);
 
     function createRoom(data) {
-        // if room does not exist - create room from id data
+
+
+        data.gameName = data.gameName || ( Math.random() * 100000 ) | 0;
+
         data.gameName = 'Game_' + data.gameName;
+
+        // if room does not exist - create room from id data
 
         if (rooms[data.gameName] === undefined) {
 
@@ -56,11 +56,17 @@ exports.initGame = function (serverIo, socket) {
             this.myRoom = data.gameName;
 
             rooms[data.gameName].tennis.entity.playerOne.id = this.id;
+
+            rooms[data.gameName].tennis.entity.playerOne.nickName = data.nickName || 'Player-1';
+
+
             rooms[data.gameName].players = 1;
 
             serverSocket.emit('playerOneConnect');
 
             serverSocket.emit('playerConnect', data.gameName);
+
+            serverSocket.emit('updateNickName', [rooms[data.gameName].tennis.entity.playerOne.nickName, 'Player-2']);
 
             serverSocket.join(data.gameName);
 
@@ -90,36 +96,51 @@ exports.initGame = function (serverIo, socket) {
         }
 
         //if data id from in rooms list there join room
-        if (rooms[data.gameName] !== undefined && rooms[data.gameName].players.length < 2) {
+        if (rooms[data.gameName] !== undefined && rooms[data.gameName].players < 2) {
 
-            this.join(data);
+            this.join(data.gameName);
 
-            this.myRoom = data;
+            this.myRoom = data.gameName;
 
-            if (rooms[data].tennis.entity.playerOne.id == undefined) {
+            if (rooms[data.gameName].tennis.entity.playerOne.id == undefined) {
 
-                rooms[data].tennis.entity.playerOne.id = this.id;
+                rooms[data.gameName].tennis.entity.playerOne.id = this.id;
+
+                rooms[data.gameName].tennis.entity.playerOne.nickName = data.nickName || 'Player-1';
 
                 serverSocket.emit('playerOneConnect');
 
+
             }
 
-            else if (rooms[data].tennis.entity.playerTwo.id == undefined) {
+            else if (rooms[data.gameName].tennis.entity.playerTwo.id == undefined) {
 
-                rooms[data].tennis.entity.playerTwo.id = this.id;
+                rooms[data.gameName].tennis.entity.playerTwo.id = this.id;
+
+                rooms[data.gameName].tennis.entity.playerTwo.nickName = data.nickName || 'Player-2';
 
                 serverSocket.emit('playerTwoConnect');
 
             }
 
+            serverSocket.emit('updateScore', rooms[data.gameName].tennis.score);
+
+            io.to(data.gameName).emit('updateNickName', [rooms[data.gameName].tennis.entity.playerOne.nickName, rooms[data.gameName].tennis.entity.playerTwo.nickName]);
+
+            rooms[data.gameName].players++;
+
+            serverSocket.emit('playerConnect', data.gameName);
+
+        }
+        else if (rooms[data.gameName].players >= 2) {
+            console.log(data.gameName + ' комната занята');
         }
 
         else {
 
-            console.log(data + ' такой комнаты не существует');
+            console.log(data.gameName + ' такой комнаты не существует');
 
         }
-
 
     }
 
@@ -154,7 +175,7 @@ exports.initGame = function (serverIo, socket) {
     function disconnect() {
 
         if (this.myRoom !== undefined && rooms[this.myRoom] !== undefined) {
-            rooms[this.myRoom].players -= 1;
+
 
             serverSocket.leave(this.myRoom);
 
@@ -165,10 +186,11 @@ exports.initGame = function (serverIo, socket) {
 
             else if (rooms[this.myRoom].tennis.entity.playerOne.id == this.id) {
                 rooms[this.myRoom].tennis.entity.playerOne.id = undefined;
+                rooms[this.myRoom].players--;
             }
             else if (rooms[this.myRoom].tennis.entity.playerTwo.id == this.id) {
-
                 rooms[this.myRoom].tennis.entity.playerTwo.id = undefined;
+                rooms[this.myRoom].players--;
             }
 
 
@@ -187,11 +209,13 @@ exports.initGame = function (serverIo, socket) {
         serverSocket.emit('giveRoomsList', roomsList)
     };
 
+
     var Tennis = (function () {
 
 
         function Tennis(data) {
             this.room = data;
+            this.score = [0, 0];
             this.entity = {};
             this.dt = .016;
             this.keyEvents = {};
@@ -213,6 +237,8 @@ exports.initGame = function (serverIo, socket) {
         var Ball = (function () {
             function Ball(tennis) {
                 this.tennis = tennis;
+                this.loser = 'playerOne';
+                this.goal = true;
                 this.speed = 500;
                 this.size = 26;
                 this.magicalNumber = 7;
@@ -230,324 +256,361 @@ exports.initGame = function (serverIo, socket) {
             }
 
             Ball.prototype.update = function () {
+                if (!this.goal) {
 
-                this.position.x += this.vector.x * this.tennis.dt;
-                this.position.y += this.vector.y * this.tennis.dt;
+                    this.position.x += this.vector.x * this.tennis.dt;
+                    this.position.y += this.vector.y * this.tennis.dt;
 
-                // horizontal ball hit the wall
-                if (this.position.x - this.radius < 0) {
-                    this.vector.x = -this.vector.x;
-                    this.position.x = this.radius;
+                    // horizontal ball hit the wall
+                    if (this.position.x - this.radius < 0) {
+                        this.vector.x = -this.vector.x;
+                        this.position.x = this.radius;
+                    }
+
+                    if (this.position.x + this.radius > this.tennis.entity.field.width) {
+                        this.vector.x = -this.vector.x;
+                        this.position.x = this.tennis.entity.field.width - this.radius;
+                    }
+
+                    if (this.position.y - this.radius < 0) {
+                        this.goal = true;
+                        this.tennis.score[1]++;
+                        io.to(this.tennis.room).emit('updateScore', this.tennis.score);
+                        this.loser = 'playerOne';
+
+                    }
+                    if (this.position.y + this.radius > this.tennis.entity.field.height) {
+                        this.goal = true;
+                        this.tennis.score[0]++;
+                        io.to(this.tennis.room).emit('updateScore', this.tennis.score);
+                        this.loser = 'playerTwo';
+                    }
+                    //ball  hit the racket playerOne
+                    var racketHitPlayerOne = function () {
+
+                        /* //the ball hit the left or right side of
+                         if (
+                         this.position.y >= this.tennis.entity.playerOne.position.y &&
+                         this.position.y <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height
+
+                         ) {
+
+                         // the ball hit the left side of
+                         if (
+                         this.position.x + this.radius >= this.tennis.entity.playerOne.position.x &&
+                         this.position.x <= this.tennis.entity.playerOne.position.x
+                         ) {
+                         this.vector.x = -this.speed;
+                         this.position.x = this.tennis.entity.playerOne.position.x - this.radius;
+                         //console.log('left rebro');
+                         return false
+                         }
+                         if (
+                         //the ball hit the right side of
+                         this.position.x - this.radius <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
+                         this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width
+                         ) {
+                         this.vector.x = this.speed;
+                         this.position.x = this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width + this.radius;
+                         //console.log('right rebro');
+                         return false
+                         }
+                         }*/
+
+                        //the lower bound of the center side
+                        if (
+                            this.position.y - this.radius <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height &&
+                            this.position.y >= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - this.radius &&
+                            this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius &&
+                            this.position.x <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 + this.radius
+                        ) {
+                            this.position.y = this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height + this.radius;
+                            this.vector.y = this.speed;
+                            //console.log('center bottom');
+                        }
+
+                        // upper bound of the center side
+                        else if (
+                            this.position.y + this.radius >= this.tennis.entity.playerOne.position.y &&
+                            this.position.y <= this.tennis.entity.playerOne.position.y + this.radius &&
+                            this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius &&
+                            this.position.x <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 + this.radius
+                        ) {
+                            this.position.y = this.tennis.entity.playerOne.position.y - this.radius;
+                            this.vector.y = -this.speed;
+                            // console.log('center top');
+                        }
+
+
+                        else {
+                            var minAngle = 1,
+                                maxAngle = 360,
+                                stepAngle = 6,
+                                i;
+
+                            for (i = minAngle; i < maxAngle; i++) {
+
+                                var angle = i * stepAngle / 180 * Math.PI;
+                                var ballRadiusY = this.position.y - this.radius * Math.cos(angle);
+                                var ballRadiusX = this.position.x + this.radius * Math.sin(angle);
+
+                                // upper bound of the left or right side
+                                if (
+                                    //++
+                                ballRadiusY >= this.tennis.entity.playerOne.position.y &&
+                                ballRadiusY <= this.tennis.entity.playerOne.position.y + this.radius
+                                ) {
+                                    // upper bound of the left side
+                                    if (
+                                        ballRadiusX >= this.tennis.entity.playerOne.position.x &&
+                                        ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius
+                                    ) {
+
+                                        this.vector.y = -this.speed;
+                                        this.position.y = this.position.y + this.tennis.entity.playerOne.position.y - ballRadiusY;
+
+                                        break;
+                                    }
+
+                                    // upper bound of the right side
+
+                                    if (
+                                        ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
+                                        ballRadiusX >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width - this.tennis.entity.playerOne.width / 2 + this.radius
+                                    ) {
+
+
+                                        this.vector.y = -this.speed;
+                                        this.position.y = this.position.y + this.tennis.entity.playerOne.position.y - ballRadiusY;
+
+                                        break;
+                                    }
+
+                                }
+
+                                //the lower bound of the left or right side
+
+                                if (
+                                    ballRadiusY <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height &&
+                                    ballRadiusY >= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - this.radius
+                                ) {
+
+                                    //the lower bound of the left side
+
+                                    if (
+                                        ballRadiusX >= this.tennis.entity.playerOne.position.x &&
+                                        ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius
+                                    ) {
+                                        this.position.y = this.position.y + this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - ballRadiusY;
+                                        this.vector.x = (this.position.x - (this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2)) * this.magicalNumber;
+                                        this.vector.y = this.speed;
+                                        //console.log('left bottom');
+                                        break;
+
+                                    }
+                                    //the lower bound of the right side
+                                    if (
+                                        ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
+                                        ballRadiusX >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width - this.tennis.entity.playerOne.width / 2 + this.radius
+                                    ) {
+                                        this.position.y = this.position.y + this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - ballRadiusY;
+                                        this.vector.x = (this.position.x - (this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2)) * this.magicalNumber;
+                                        this.vector.y = this.speed;
+                                        // console.log('right bottom');
+                                        break;
+                                    }
+
+                                }
+
+                            }
+                        }
+
+                    };
+
+                    //ball hit the racket playerTwo
+                    var racketHitPlayerTwo = function () {
+
+                        /* //the ball hit the left or right side of
+                         if (
+                         this.position.y >= this.tennis.entity.playerTwo.position.y &&
+                         this.position.y <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height
+
+                         ) {
+
+                         // the ball hit the left side of
+                         if (
+                         this.position.x + this.radius >= this.tennis.entity.playerTwo.position.x &&
+                         this.position.x <= this.tennis.entity.playerTwo.position.x
+                         ) {
+                         this.vector.x = -this.speed;
+                         this.position.x = this.tennis.entity.playerTwo.position.x - this.radius;
+                         // console.log('left rebro');
+                         return false
+                         }
+                         if (
+                         //the ball hit the right side of
+                         this.position.x - this.radius <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
+                         this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width
+                         ) {
+                         this.vector.x = this.speed;
+                         this.position.x = this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width + this.radius;
+                         //console.log('right rebro');
+                         return false
+                         }
+                         }*/
+
+                        // upper bound of the center side
+                        if (
+                            this.position.y + this.radius >= this.tennis.entity.playerTwo.position.y &&
+                            this.position.y <= this.tennis.entity.playerTwo.position.y + this.radius &&
+                            this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius &&
+                            this.position.x <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 + this.radius
+                        ) {
+                            this.position.y = this.tennis.entity.playerTwo.position.y - this.radius;
+                            this.vector.y = -this.speed;
+                            //console.log('center');
+                        }
+
+                        //the lower bound of the center side
+                        else if (
+                            this.position.y - this.radius <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height &&
+                            this.position.y >= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height + this.radius &&
+                            this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius &&
+                            this.position.x <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 + this.radius
+                        ) {
+                            this.position.y = this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height + this.radius;
+                            this.vector.y = this.speed;
+                            //console.log('center bottom');
+                        }
+                        else {
+                            var minAngle = 1,
+                                maxAngle = 360,
+                                stepAngle = 6,
+                                i;
+
+                            for (i = minAngle; i < maxAngle; i++) {
+
+                                var angle = i * stepAngle / 180 * Math.PI;
+                                var ballRadiusY = this.position.y - this.radius * Math.cos(angle);
+                                var ballRadiusX = this.position.x + this.radius * Math.sin(angle);
+
+                                // upper bound of the  left or right side
+                                if (
+                                    ballRadiusY >= this.tennis.entity.playerTwo.position.y &&
+                                    ballRadiusY <= this.tennis.entity.playerTwo.position.y + this.radius
+                                ) {
+                                    // upper bound of the left side
+                                    if (
+                                        ballRadiusX >= this.tennis.entity.playerTwo.position.x &&
+                                        ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius
+                                    ) {
+                                        this.vector.y = -this.speed;
+                                        this.vector.x = (this.position.x - (this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2)) * this.magicalNumber;
+                                        this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y - ballRadiusY;
+
+                                        break;
+                                    }
+
+                                    // upper bound of the right side
+
+                                    if (
+                                        ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
+                                        ballRadiusX >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width - this.tennis.entity.playerTwo.width / 2 + this.radius
+                                    ) {
+
+                                        this.vector.y = -this.speed;
+                                        this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y - ballRadiusY;
+                                        this.vector.x = (this.position.x - (this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2)) * this.magicalNumber;
+
+                                        break;
+                                    }
+
+                                }
+
+                                //the lower bound of the left abd right side
+
+                                if (
+                                    ballRadiusY <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height &&
+                                    ballRadiusY >= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - this.radius
+                                ) {
+
+                                    //the lower bound of the left side
+
+                                    if (
+                                        ballRadiusX >= this.tennis.entity.playerTwo.position.x &&
+                                        ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius
+                                    ) {
+                                        this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - ballRadiusY;
+                                        this.vector.y = this.speed;
+                                        //console.log('left bottom');
+                                        break;
+
+                                    }
+
+                                    // the lower bound of the right side
+
+                                    if (
+                                        ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
+                                        ballRadiusX >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width - this.tennis.entity.playerTwo.width / 2 + this.radius
+                                    ) {
+                                        this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - ballRadiusY;
+                                        this.vector.y = this.speed;
+                                        //console.log('right bottom');
+                                        break;
+                                    }
+
+                                }
+
+                            }
+                        }
+
+                    };
+
+
+                    if (this.position.y <= this.tennis.entity.field.height / 2) {
+                        racketHitPlayerOne.call(this);
+                    }
+
+                    if (this.position.y >= this.tennis.entity.field.height / 2) {
+
+                        racketHitPlayerTwo.call(this);
+                    }
+
                 }
 
-                if (this.position.x + this.radius > this.tennis.entity.field.width) {
-                    this.vector.x = -this.vector.x;
-                    this.position.x = this.tennis.entity.field.width - this.radius;
-                }
+                else if (this.goal) {
 
-                if (this.position.y - this.radius < 0) {
-                    this.position.y = this.radius;
-                    this.vector.y = -this.vector.y;
-                }
-                if (this.position.y + this.radius > this.tennis.entity.field.height) {
-                    this.position.y = this.tennis.entity.field.height - this.radius;
-                    this.vector.y = -this.vector.y;
-                }
+                    if (this.loser == 'playerOne') {
 
-                //ball  hit the racket playerOne
-                var racketHitPlayerOne = function () {
-
-                    /* //the ball hit the left or right side of
-                     if (
-                     this.position.y >= this.tennis.entity.playerOne.position.y &&
-                     this.position.y <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height
-
-                     ) {
-
-                     // the ball hit the left side of
-                     if (
-                     this.position.x + this.radius >= this.tennis.entity.playerOne.position.x &&
-                     this.position.x <= this.tennis.entity.playerOne.position.x
-                     ) {
-                     this.vector.x = -this.speed;
-                     this.position.x = this.tennis.entity.playerOne.position.x - this.radius;
-                     //console.log('left rebro');
-                     return false
-                     }
-                     if (
-                     //the ball hit the right side of
-                     this.position.x - this.radius <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
-                     this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width
-                     ) {
-                     this.vector.x = this.speed;
-                     this.position.x = this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width + this.radius;
-                     //console.log('right rebro');
-                     return false
-                     }
-                     }*/
-
-                    //the lower bound of the center side
-                    if (
-                        this.position.y - this.radius <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height &&
-                        this.position.y >= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - this.radius &&
-                        this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius &&
-                        this.position.x <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 + this.radius
-                    ) {
                         this.position.y = this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height + this.radius;
                         this.vector.y = this.speed;
-                        //console.log('center bottom');
                     }
-
-                    // upper bound of the center side
-                    else if (
-                        this.position.y + this.radius >= this.tennis.entity.playerOne.position.y &&
-                        this.position.y <= this.tennis.entity.playerOne.position.y + this.radius &&
-                        this.position.x >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius &&
-                        this.position.x <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 + this.radius
-                    ) {
-                        this.position.y = this.tennis.entity.playerOne.position.y - this.radius;
-                        this.vector.y = -this.speed;
-                        // console.log('center top');
-                    }
-
-
-                    else {
-                        var minAngle = 1,
-                            maxAngle = 360,
-                            stepAngle = 6,
-                            i;
-
-                        for (i = minAngle; i < maxAngle; i++) {
-
-                            var angle = i * stepAngle / 180 * Math.PI;
-                            var ballRadiusY = this.position.y - this.radius * Math.cos(angle);
-                            var ballRadiusX = this.position.x + this.radius * Math.sin(angle);
-
-                            // upper bound of the left or right side
-                            if (
-                                //++
-                            ballRadiusY >= this.tennis.entity.playerOne.position.y &&
-                            ballRadiusY <= this.tennis.entity.playerOne.position.y + this.radius
-                            ) {
-                                // upper bound of the left side
-                                if (
-                                    ballRadiusX >= this.tennis.entity.playerOne.position.x &&
-                                    ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius
-                                ) {
-
-                                    this.vector.y = -this.speed;
-                                    this.position.y = this.position.y + this.tennis.entity.playerOne.position.y - ballRadiusY;
-
-                                    break;
-                                }
-
-                                // upper bound of the right side
-
-                                if (
-                                    ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
-                                    ballRadiusX >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width - this.tennis.entity.playerOne.width / 2 + this.radius
-                                ) {
-
-
-                                    this.vector.y = -this.speed;
-                                    this.position.y = this.position.y + this.tennis.entity.playerOne.position.y - ballRadiusY;
-
-                                    break;
-                                }
-
-                            }
-
-                            //the lower bound of the left or right side
-
-                            if (
-                                ballRadiusY <= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height &&
-                                ballRadiusY >= this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - this.radius
-                            ) {
-
-                                //the lower bound of the left side
-
-                                if (
-                                    ballRadiusX >= this.tennis.entity.playerOne.position.x &&
-                                    ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2 - this.radius
-                                ) {
-                                    this.position.y = this.position.y + this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - ballRadiusY;
-                                    this.vector.x = (this.position.x - (this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2)) * this.magicalNumber;
-                                    this.vector.y = this.speed;
-                                    //console.log('left bottom');
-                                    break;
-
-                                }
-                                //the lower bound of the right side
-                                if (
-                                    ballRadiusX <= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width &&
-                                    ballRadiusX >= this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width - this.tennis.entity.playerOne.width / 2 + this.radius
-                                ) {
-                                    this.position.y = this.position.y + this.tennis.entity.playerOne.position.y + this.tennis.entity.playerOne.height - ballRadiusY;
-                                    this.vector.x = (this.position.x - (this.tennis.entity.playerOne.position.x + this.tennis.entity.playerOne.width / 2)) * this.magicalNumber;
-                                    this.vector.y = this.speed;
-                                    // console.log('right bottom');
-                                    break;
-                                }
-
-                            }
-
-                        }
-                    }
-
-                };
-
-                //ball hit the racket playerTwo
-                var racketHitPlayerTwo = function () {
-
-                    /* //the ball hit the left or right side of
-                     if (
-                     this.position.y >= this.tennis.entity.playerTwo.position.y &&
-                     this.position.y <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height
-
-                     ) {
-
-                     // the ball hit the left side of
-                     if (
-                     this.position.x + this.radius >= this.tennis.entity.playerTwo.position.x &&
-                     this.position.x <= this.tennis.entity.playerTwo.position.x
-                     ) {
-                     this.vector.x = -this.speed;
-                     this.position.x = this.tennis.entity.playerTwo.position.x - this.radius;
-                     // console.log('left rebro');
-                     return false
-                     }
-                     if (
-                     //the ball hit the right side of
-                     this.position.x - this.radius <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
-                     this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width
-                     ) {
-                     this.vector.x = this.speed;
-                     this.position.x = this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width + this.radius;
-                     //console.log('right rebro');
-                     return false
-                     }
-                     }*/
-
-                    // upper bound of the center side
-                    if (
-                        this.position.y + this.radius >= this.tennis.entity.playerTwo.position.y &&
-                        this.position.y <= this.tennis.entity.playerTwo.position.y + this.radius &&
-                        this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius &&
-                        this.position.x <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 + this.radius
-                    ) {
+                    if (this.loser == 'playerTwo') {
                         this.position.y = this.tennis.entity.playerTwo.position.y - this.radius;
                         this.vector.y = -this.speed;
-                        //console.log('center');
                     }
+                    this.position.x = this.tennis.entity[this.loser].position.x + this.tennis.entity[this.loser].width / 2;
 
-                    //the lower bound of the center side
-                    else if (
-                        this.position.y - this.radius <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height &&
-                        this.position.y >= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height + this.radius &&
-                        this.position.x >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius &&
-                        this.position.x <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 + this.radius
-                    ) {
-                        this.position.y = this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height + this.radius;
-                        this.vector.y = this.speed;
-                        //console.log('center bottom');
-                    }
-                    else {
-                        var minAngle = 1,
-                            maxAngle = 360,
-                            stepAngle = 6,
-                            i;
 
-                        for (i = minAngle; i < maxAngle; i++) {
-
-                            var angle = i * stepAngle / 180 * Math.PI;
-                            var ballRadiusY = this.position.y - this.radius * Math.cos(angle);
-                            var ballRadiusX = this.position.x + this.radius * Math.sin(angle);
-
-                            // upper bound of the  left or right side
-                            if (
-                                ballRadiusY >= this.tennis.entity.playerTwo.position.y &&
-                                ballRadiusY <= this.tennis.entity.playerTwo.position.y + this.radius
-                            ) {
-                                // upper bound of the left side
-                                if (
-                                    ballRadiusX >= this.tennis.entity.playerTwo.position.x &&
-                                    ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius
-                                ) {
-                                    this.vector.y = -this.speed;
-                                    this.vector.x = (this.position.x - (this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2)) * this.magicalNumber;
-                                    this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y - ballRadiusY;
-
-                                    break;
-                                }
-
-                                // upper bound of the right side
-
-                                if (
-                                    ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
-                                    ballRadiusX >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width - this.tennis.entity.playerTwo.width / 2 + this.radius
-                                ) {
-
-                                    this.vector.y = -this.speed;
-                                    this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y - ballRadiusY;
-                                    this.vector.x = (this.position.x - (this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2)) * this.magicalNumber;
-
-                                    break;
-                                }
-
+                    this.vector.x = 0;
+                    if (this.tennis.entity.playerOne.id != undefined && this.tennis.entity.playerTwo.id != undefined) {
+                        if (this.tennis.entity[this.loser].keyEvents.space) {
+                            function getRandomInt(min, max) {
+                                return Math.floor(Math.random() * (max - min)) + min;
                             }
 
-                            //the lower bound of the left abd right side
-
-                            if (
-                                ballRadiusY <= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height &&
-                                ballRadiusY >= this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - this.radius
-                            ) {
-
-                                //the lower bound of the left side
-
-                                if (
-                                    ballRadiusX >= this.tennis.entity.playerTwo.position.x &&
-                                    ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width / 2 - this.radius
-                                ) {
-                                    this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - ballRadiusY;
-                                    this.vector.y = this.speed;
-                                    //console.log('left bottom');
-                                    break;
-
-                                }
-
-                                // the lower bound of the right side
-
-                                if (
-                                    ballRadiusX <= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width &&
-                                    ballRadiusX >= this.tennis.entity.playerTwo.position.x + this.tennis.entity.playerTwo.width - this.tennis.entity.playerTwo.width / 2 + this.radius
-                                ) {
-                                    this.position.y = this.position.y + this.tennis.entity.playerTwo.position.y + this.tennis.entity.playerTwo.height - ballRadiusY;
-                                    this.vector.y = this.speed;
-                                    //console.log('right bottom');
-                                    break;
-                                }
-
-                            }
+                            this.goal = false;
+                            this.vector.x = getRandomInt(-this.speed, this.speed);
 
                         }
                     }
 
-                };
 
-
-                if (this.position.y <= this.tennis.entity.field.height / 2) {
-                    racketHitPlayerOne.call(this);
-                }
-
-                if (this.position.y >= this.tennis.entity.field.height / 2) {
-
-                    racketHitPlayerTwo.call(this);
                 }
 
 
-            }
-            ;
+            };
+
 
             return Ball;
         })();
@@ -557,6 +620,7 @@ exports.initGame = function (serverIo, socket) {
             function Racket(player, tennis) {
                 this.tennis = tennis;
                 this.id = undefined;
+                this.nickName = undefined
                 this.width = 250;
                 this.height = 56;
                 this.speed = 500;

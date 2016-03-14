@@ -2,7 +2,6 @@
 jQuery(function ($) {
 
 
-
         //clientIo.socket.id  client session id
 
 
@@ -28,6 +27,8 @@ jQuery(function ($) {
                 this.socket.on('playerTwoConnect', this.playerTwoConnect.bind(this));
                 this.socket.on('playerConnect', this.playerConnect.bind(this));
                 this.socket.on('giveRoomsList', this.giveRoomsList.bind(this));
+                this.socket.on('updateNickName', this.updateNickName.bind(this));
+                this.socket.on('updateScore', this.updateScore.bind(this));
             };
 
             ClientIo.prototype.onConnected = function () {
@@ -37,8 +38,8 @@ jQuery(function ($) {
             ClientIo.prototype.createRoom = function (data) {
                 this.socket.emit('createRoom', data);
             };
-            ClientIo.prototype.joinRoom = function (roomName) {
-                this.socket.emit('joinRoom', roomName);
+            ClientIo.prototype.joinRoom = function (data) {
+                this.socket.emit('joinRoom', data);
             };
 
             ClientIo.prototype.emitKeyEvents = function (data) {
@@ -59,6 +60,10 @@ jQuery(function ($) {
                 window.location.hash = data;
             };
 
+            ClientIo.prototype.updateNickName = function (data) {
+                app.nickName = data;
+            };
+
             ClientIo.prototype.leave = function () {
                 app.gameState = false;
                 this.socket.emit('leaveRoom');
@@ -77,6 +82,10 @@ jQuery(function ($) {
                 app.updateRoomList();
             };
 
+            ClientIo.prototype.updateScore = function (data) {
+                app.score = data;
+                app.updateScore();
+            };
 
             return ClientIo;
         })();
@@ -90,7 +99,7 @@ jQuery(function ($) {
             };
 
             function App() {
-
+                this.score = [0, 0];
                 this.entity = undefined;
                 this.dt = undefined;
                 this.player = undefined;
@@ -123,14 +132,25 @@ jQuery(function ($) {
 
             App.prototype.bindEvents = function () {
                 $(document).on('click', '#NewGame', this.newGame);
-                //$(document).on('click', '.join-game', this.joinGame);
+                $(document).on('click', '#JoinGame', this.joinGame);
+                $(document).on('click', '.game-list tbody tr', this.selectionGame);
                 $(window).on('hashchange', this.changeAppState.bind(this));
             };
 
+            App.prototype.selectionGame = function (e) {
+                $('.game-list tbody tr').removeClass('selected');
+                $(this).toggleClass('selected');
+            };
+
             App.prototype.bindGameEvents = function () {
-                $(window).on('blur', this.keySet);
-                $(document).on('keydown', this.keySet);
-                $(document).on('keyup', this.keySet);
+                $(window).bind('blur', this.keySet);
+                $(document).bind('keydown', this.keySet);
+                $(document).bind('keyup', this.keySet);
+            };
+
+            App.prototype.unbindGameEvents = function () {
+                $(window).unbind('blur', this.keySet);
+                $(document).unbind('keydown', this.keySet);
             };
 
             App.prototype.createEntity = function () {
@@ -154,6 +174,7 @@ jQuery(function ($) {
 
                     if (state.indexOf('Game') != 0) {
                         clientIo.leave();
+                        this.unbindGameEvents();
                     }
                     else if (state.slice(0, 4) == 'Game') {
                         state = 'Game';
@@ -180,13 +201,14 @@ jQuery(function ($) {
                                 '<div class="container center">' +
                                 '<div class="new-game">' +
                                 '<form>' +
-                                '<input type="text" name="nickName" placeholder="Your Nick Name">' +
-                                '<input type="text" name="gameName" placeholder="Game Name">' +
+                                '<input type="text" name="nickName" placeholder="Your Nick Name"  autocomplete="off">' +
+                                '<input type="text" name="gameName" placeholder="Game Name"  autocomplete="off">' +
                                 '</form>' +
 
                                 '<a id="NewGame" href="#" class="link blue">Create Game</a>' +
                                 '</div>' +
                                 '</div>';
+
                             break;
                         case 'Join_Game':
 
@@ -201,11 +223,12 @@ jQuery(function ($) {
                                 return;
                             }
 
-                            pageHtml = '<div class="tennis-box"></div>';
+                            pageHtml = '<div class="score">Player-1 - 10 : Player-1 - 10</div>' +
+                                '<div class="tennis-box"></div>';
                             callback = function () {
 
                                 $('.tennis-box').append(canvas);
-
+                                callback = this.updateScore();
                                 this.bindGameEvents();
                                 this.loop();
 
@@ -238,6 +261,7 @@ jQuery(function ($) {
 
                         $('.page').addClass('remove-animation');
 
+
                     }).children().on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function (e) {
                         e.stopPropagation();
                     });
@@ -256,18 +280,35 @@ jQuery(function ($) {
 
             };
 
+            App.prototype.updateScore = function () {
+                if (this.pageState.slice(0, 4) != 'Game') {
+                    return;
+                }
+                var scoreHtml = '<div class="playerOne">' + this.nickName[0] + ' : ' + this.score[0] + '</div>' +
+                    '<div class="playerTwo">' + this.nickName[1] + ' : ' + this.score[1] + '</div>';
+                $('.score').html(scoreHtml);
+            };
 
             App.prototype.newGame = function (e) {
                 e.preventDefault();
                 var nickName = $('.new-game input[name="nickName"]').val();
                 var gameName = $('.new-game input[name="gameName"]').val();
 
-                this.nickName = nickName;
 
                 clientIo.createRoom({nickName: nickName, gameName: gameName});
             };
 
             App.prototype.joinGame = function (e) {
+                e.preventDefault();
+                if (!$('tr').hasClass('selected')) {
+                    return;
+                }
+
+                var gameName = $('tr.selected .game-name').text();
+                var nickName = $('input[name="nickName"]').val();
+
+
+                clientIo.joinRoom({gameName: gameName, nickName: nickName});
 
             };
 
@@ -275,8 +316,24 @@ jQuery(function ($) {
                 if (this.pageState != 'Join_Game') {
                     return;
                 }
-                var ss = JSON.stringify(this.roomsList);
-                $('.container').text(ss);
+
+                var listRoomHtml =
+                    '<div class="game-list">' +
+                    '<table>' +
+                    '<thead>' +
+                    '<tr><td>Game Name</td><td>Players</td></tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+
+                for (var key in this.roomsList) {
+                    listRoomHtml += '<tr><td class="game-name">' + this.roomsList[key].roomName + '</td>' + '<td class="players-room">' + this.roomsList[key].players + '<span>/2</span></td></tr>'
+                }
+                listRoomHtml += '</tbody></table><input type="text" name="nickName" autocomplete="off" placeholder="Your Nick Name"><a id="JoinGame" href="#" class="link blue small">Connected</a></div></div>';
+
+                $('.container').html(listRoomHtml);
+
+
             };
 
             App.prototype.keySet = function (e) {
@@ -322,7 +379,6 @@ jQuery(function ($) {
             };
 
             App.prototype.updateKeyEvents = function () {
-
                 if (this.player == 'playerOne') {
                     this.playerTwo.keyEvents = this.entity.playerTwo.keyEvents;
                 }
@@ -346,7 +402,6 @@ jQuery(function ($) {
                     this.updateEntity[i]();
                 }
 
-
             };
 
             App.prototype.render = function () {
@@ -364,7 +419,6 @@ jQuery(function ($) {
             };
 
             App.prototype.loop = function () {
-
                 var now = Date.now();
 
                 this.dt = (now - this.lastTime) / 1000;

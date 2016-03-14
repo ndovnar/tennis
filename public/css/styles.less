@@ -25,10 +25,31 @@ a {
     left: 0;
 }
 
+.score {
+    width: 100%;
+    height: 8%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: fade(@color-2, 30%);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: #fff;
+    .playerOne {
+        width: 50%;
+        text-align: left;
+    }
+    .playerTwo {
+        width: 50%;
+        text-align: right;
+    }
+}
+
 #tennis {
     position: relative;
-    height: 96%;
-    top: 2%;
+    height: 90%;
+    top: 8%;
     max-width: 100%;
     border: solid 1px @color-2;
     box-shadow: inset 0 0 12px @color-2 , 0 0 12px  @color-2;
@@ -70,6 +91,67 @@ body {
     }
 }
 
+.game-list {
+    min-width: 600px;
+
+    table {
+        width: 100%;
+        //text-align: center;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+
+    }
+    thead {
+        tr {
+            background-color: @color-2;
+            color: @color-3;
+            border: solid 1px @color-2;
+
+        }
+        td {
+            text-transform: uppercase;
+            font-weight: 600;
+            padding: 20px 100px 20px 100px;
+
+        }
+    }
+    tbody {
+        tr {
+            border: solid 1px @color-2;
+            color: @color-3;
+            background-color: fade(@color-2, 15%);
+            transition: all .4s ease;
+
+            &.selected {
+                background-color: fade(@color-2, 50%);
+            }
+            &:hover {
+                cursor: pointer;
+            }
+            &:hover:not(.selected) {
+
+                background-color: fade(@color-2, 30%);
+
+            }
+        }
+        td {
+            padding: 15px 100px 15px 100px;
+            max-width: 117px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td {
+            &.players-number {
+                letter-spacing: 10px;
+
+            }
+        }
+    }
+
+}
+
 .link {
     display: block;
     text-align: center;
@@ -89,7 +171,7 @@ body {
         animation: myAnim 2s infinite ease-in;
     }
     &.small {
-        font-size: 36px;
+        font-size: 42px;
     }
     &:hover {
         //animation: shake 1s infinite both;
@@ -98,38 +180,36 @@ body {
 
 }
 
-.new-game {
-    input[type='text'] {
-        background-color: transparent;
-        border: solid 1px @color-2;
+input[type='text'] {
+    background-color: transparent;
+    border: solid 1px @color-2;
+    color: @color-3;
+    font-size: 18px;
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-top: 30px;
+    transition: all .4s ease;
+    outline: none;
+    &::-webkit-input-placeholder {
         color: @color-3;
-        font-size: 18px;
-        display: block;
-        width: 100%;
-        padding: 15px 20px;
-        margin-top: 30px;
-        transition: all .4s ease;
-        outline: none;
-        &::-webkit-input-placeholder {
-            color: @color-3;
-        }
-        &::-moz-placeholder {
-            color: @color-3;
-        }
-        &:-moz-placeholder {
-            color: @color-3;
-        }
-        &:-ms-input-placeholder {
-            color: @color-3;
-        }
+    }
+    &::-moz-placeholder {
+        color: @color-3;
+    }
+    &:-moz-placeholder {
+        color: @color-3;
+    }
+    &:-ms-input-placeholder {
+        color: @color-3;
+    }
 
-        &:hover {
-            box-shadow: inset 0 0 12px @color-2 , 0 0 12px  @color-2;
-        }
+    &:hover {
+        box-shadow: inset 0 0 12px @color-2 , 0 0 12px  @color-2;
+    }
 
-        &:first-child {
-            margin-top: 0;
-        }
+    &:first-child {
+        margin-top: 0;
     }
 }
 

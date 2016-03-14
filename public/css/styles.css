@@ -19,10 +19,30 @@ a {
   top: 0;
   left: 0;
 }
+.score {
+  width: 100%;
+  height: 8%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: rgba(255, 102, 51, 0.3);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  color: #fff;
+}
+.score .playerOne {
+  width: 50%;
+  text-align: left;
+}
+.score .playerTwo {
+  width: 50%;
+  text-align: right;
+}
 #tennis {
   position: relative;
-  height: 96%;
-  top: 2%;
+  height: 90%;
+  top: 8%;
   max-width: 100%;
   border: solid 1px #ff6633;
   box-shadow: inset 0 0 12px #ff6633, 0 0 12px #ff6633;
@@ -60,6 +80,49 @@ body {
   transform: scale(1);
   opacity: 1;
 }
+.game-list {
+  min-width: 600px;
+}
+.game-list table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+.game-list thead tr {
+  background-color: #ff6633;
+  color: #ffffff;
+  border: solid 1px #ff6633;
+}
+.game-list thead td {
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 20px 100px 20px 100px;
+}
+.game-list tbody tr {
+  border: solid 1px #ff6633;
+  color: #ffffff;
+  background-color: rgba(255, 102, 51, 0.15);
+  transition: all .4s ease;
+}
+.game-list tbody tr.selected {
+  background-color: rgba(255, 102, 51, 0.5);
+}
+.game-list tbody tr:hover {
+  cursor: pointer;
+}
+.game-list tbody tr:hover:not(.selected) {
+  background-color: rgba(255, 102, 51, 0.3);
+}
+.game-list tbody td {
+  padding: 15px 100px 15px 100px;
+  max-width: 117px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.game-list tbody td.players-number {
+  letter-spacing: 10px;
+}
 .link {
   display: block;
   text-align: center;
@@ -79,12 +142,12 @@ body {
   animation: myAnim 2s infinite ease-in;
 }
 .link.small {
-  font-size: 36px;
+  font-size: 42px;
 }
 .link:hover {
   text-shadow: 0 0 230px;
 }
-.new-game input[type='text'] {
+input[type='text'] {
   background-color: transparent;
   border: solid 1px #ff6633;
   color: #ffffff;
@@ -96,22 +159,22 @@ body {
   transition: all .4s ease;
   outline: none;
 }
-.new-game input[type='text']::-webkit-input-placeholder {
+input[type='text']::-webkit-input-placeholder {
   color: #ffffff;
 }
-.new-game input[type='text']::-moz-placeholder {
+input[type='text']::-moz-placeholder {
   color: #ffffff;
 }
-.new-game input[type='text']:-moz-placeholder {
+input[type='text']:-moz-placeholder {
   color: #ffffff;
 }
-.new-game input[type='text']:-ms-input-placeholder {
+input[type='text']:-ms-input-placeholder {
   color: #ffffff;
 }
-.new-game input[type='text']:hover {
+input[type='text']:hover {
   box-shadow: inset 0 0 12px #ff6633, 0 0 12px #ff6633;
 }
-.new-game input[type='text']:first-child {
+input[type='text']:first-child {
   margin-top: 0;
 }
 @-webkit-keyframes myAnim {
