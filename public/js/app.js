@@ -251,7 +251,9 @@ jQuery(function ($) {
                         $('.page').html(pageHtml);
 
                         if (callback != undefined) {
-                            callback();
+                           setTimeout(function(){
+                               callback();
+                           },1);
                         }
 
 
