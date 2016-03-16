@@ -1,11 +1,13 @@
 ;
 jQuery(function ($) {
-        $(document).tap(function(){
-            console.log('ss');
-        })
-        $(document).on('doubletap', function () {
-            alert('ss');
-        });
+
+        var touchtime = 0;
+
+        function doubleClick() {
+
+        }
+
+
         var canvas, ctx;
         canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
         ctx = $(canvas).get(0).getContext('2d');
@@ -138,6 +140,28 @@ jQuery(function ($) {
                 $(window).on('hashchange', this.changeAppState.bind(this));
             };
 
+            App.prototype.doubleClick = function () {
+                if (touchtime == 0) {
+                    //set first click
+                    touchtime = new Date().getTime();
+                } else {
+                    //compare first click to this click and see if they occurred within double click threshold
+                    if (((new Date().getTime()) - touchtime) < 800) {
+                        //double click occurred
+                        keyEvents.space = true;
+
+                        setTimeout(function () {
+                            keyEvents.space = false;
+                        }, 100);
+
+                        touchtime = 0;
+                    } else {
+                        //not a double click so set as a new first click
+                        touchtime = new Date().getTime();
+                    }
+                }
+            };
+
             App.prototype.selectionGame = function (e) {
                 $('.game-list tbody tr').removeClass('selected');
                 $(this).toggleClass('selected');
@@ -149,6 +173,7 @@ jQuery(function ($) {
                 $(document).bind('keyup', this.keySet);
                 $(document).bind('touchstart', this.keySet);
                 $(document).bind('touchend', this.keySet);
+                $(document).bind('click', this.doubleClick);
             };
 
             App.prototype.unbindGameEvents = function () {
@@ -156,7 +181,7 @@ jQuery(function ($) {
                 $(document).unbind('keydown', this.keySet);
                 $(document).unbind('touchstart', this.keySet);
                 $(document).unbind('touchend', this.keySet);
-
+                $(document).unbind('click', this.doubleClick);
             };
 
             App.prototype.createEntity = function () {
@@ -181,7 +206,6 @@ jQuery(function ($) {
                     if (state.indexOf('Game') != 0) {
                         clientIo.leave();
                         this.unbindGameEvents();
-
                     }
                     else if (state.slice(0, 4) == 'Game') {
                         state = 'Game';
@@ -201,11 +225,6 @@ jQuery(function ($) {
                                 '</div> ' +
                                 '</nav>' +
                                 '</div>';
-                            callback = function () {
-                                $('a').click(function (e) {
-                                    window.location.hash = $(e.target).attr('href');
-                                });
-                            };
                             break;
                         case 'New_Game':
                             pageHtml =
@@ -262,22 +281,23 @@ jQuery(function ($) {
                     this.pageState = url;
 
 
-                    $('.main-page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
+                    $('.main-page.add-animation').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
 
+                        if ($('.main-page').attr('class').indexOf('add-animation') >= 0) {
 
-                        if (callback != undefined) {
+                            if (callback != undefined) {
+                                $('.main-page').html(pageHtml).promise().done(function () {
+                                    callback();
+                                });
 
-                            $('.main-page').html(pageHtml).promise().done(function () {
-                                callback();
-                            });
-
+                            }
+                            else {
+                                $('.main-page').html(pageHtml);
+                            }
                         }
-                        else {
-                            $('.main-page').html(pageHtml);
-                        }
 
 
-                        $('.main-page').addClass('remove-animation');
+                        $('.main-page').removeClass('add-animation').addClass('remove-animation');
 
 
                     }).children().on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function (e) {
@@ -395,7 +415,9 @@ jQuery(function ($) {
 
                 if (key == 37 || key == 39 || key == 32) {
 
-                    e.preventDefault();
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
 
                     switch (key) {
 
@@ -418,7 +440,6 @@ jQuery(function ($) {
                 }
 
             };
-
 
             App.prototype.updateKeyEvents = function () {
                 if (this.player == 'playerOne') {

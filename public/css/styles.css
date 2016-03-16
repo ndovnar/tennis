@@ -69,12 +69,6 @@ body {
   justify-content: center;
   position: absolute;
 }
-.ui-overlay-a,
-.ui-page-theme-a,
-.ui-page-theme-a .ui-panel-wrapper {
-  background-color: transparent;
-  outline: none;
-}
 .main-page {
   width: 100%;
   height: 100%;
