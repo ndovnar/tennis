@@ -3,9 +3,6 @@ jQuery(function ($) {
 
         var touchtime = 0;
 
-        function doubleClick() {
-
-        }
 
 
         var canvas, ctx;
@@ -172,16 +169,17 @@ jQuery(function ($) {
                 $(document).bind('keydown', this.keySet);
                 $(document).bind('keyup', this.keySet);
                 $(document).bind('touchstart', this.keySet);
+                $(document).bind('touchstart', this.doubleClick);
                 $(document).bind('touchend', this.keySet);
-                $(document).bind('click', this.doubleClick);
+
             };
 
             App.prototype.unbindGameEvents = function () {
                 $(window).unbind('blur', this.keySet);
                 $(document).unbind('keydown', this.keySet);
                 $(document).unbind('touchstart', this.keySet);
+                $(document).unbind('touchstart', this.doubleClick);
                 $(document).unbind('touchend', this.keySet);
-                $(document).unbind('click', this.doubleClick);
             };
 
             App.prototype.createEntity = function () {
