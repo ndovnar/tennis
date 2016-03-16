@@ -1,7 +1,6 @@
 ;
 jQuery(function ($) {
 
-
         var canvas, ctx;
         canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
         ctx = $(canvas).get(0).getContext('2d');
@@ -145,7 +144,7 @@ jQuery(function ($) {
                 $(document).bind('keyup', this.keySet);
                 $(document).bind('touchstart', this.keySet);
                 $(document).bind('touchend', this.keySet);
-
+                $(document).bind('dblclick', this.keySet);
 
             };
 
@@ -350,6 +349,8 @@ jQuery(function ($) {
 
             App.prototype.keySet = function (e) {
 
+                console.log(e.type);
+
                 var key, state;
 
                 if (e.type === 'blur') {
@@ -380,6 +381,10 @@ jQuery(function ($) {
                     }
 
 
+                }
+                if (e.type === 'dblclick') {
+                    state = true;
+                    key = 32;
                 }
                 else {
                     key = e.keyCode;
