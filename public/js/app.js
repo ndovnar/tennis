@@ -144,7 +144,6 @@ jQuery(function ($) {
                 $(document).bind('keyup', this.keySet);
                 $(document).bind('touchstart', this.keySet);
                 $(document).bind('touchend', this.keySet);
-                $(document).bind('dblclick', this.keySet);
 
             };
 
@@ -382,10 +381,7 @@ jQuery(function ($) {
 
 
                 }
-                if (e.type === 'dblclick') {
-                    state = true;
-                    key = 32;
-                }
+
                 else {
                     key = e.keyCode;
                     state = (e.type == 'keydown') ? true : false;
