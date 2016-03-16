@@ -1,7 +1,10 @@
 ;
 jQuery(function ($) {
-        $(window).dblclick(function(){
-          alert('sss');
+        $(document).tap(function(){
+            console.log('ss');
+        })
+        $(document).on('doubletap', function () {
+            alert('ss');
         });
         var canvas, ctx;
         canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
@@ -198,6 +201,11 @@ jQuery(function ($) {
                                 '</div> ' +
                                 '</nav>' +
                                 '</div>';
+                            callback = function () {
+                                $('a').click(function (e) {
+                                    window.location.hash = $(e.target).attr('href');
+                                });
+                            };
                             break;
                         case 'New_Game':
                             pageHtml =
