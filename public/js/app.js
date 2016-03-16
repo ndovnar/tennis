@@ -2,9 +2,6 @@
 jQuery(function ($) {
 
 
-        //clientIo.socket.id  client session id
-
-
         var canvas, ctx;
         canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
         ctx = $(canvas).get(0).getContext('2d');
@@ -146,11 +143,18 @@ jQuery(function ($) {
                 $(window).bind('blur', this.keySet);
                 $(document).bind('keydown', this.keySet);
                 $(document).bind('keyup', this.keySet);
+                $(document).bind('touchstart', this.keySet);
+                $(document).bind('touchend', this.keySet);
+
+
             };
 
             App.prototype.unbindGameEvents = function () {
                 $(window).unbind('blur', this.keySet);
                 $(document).unbind('keydown', this.keySet);
+                $(document).unbind('touchstart', this.keySet);
+                $(document).unbind('touchend', this.keySet);
+
             };
 
             App.prototype.createEntity = function () {
@@ -175,6 +179,7 @@ jQuery(function ($) {
                     if (state.indexOf('Game') != 0) {
                         clientIo.leave();
                         this.unbindGameEvents();
+
                     }
                     else if (state.slice(0, 4) == 'Game') {
                         state = 'Game';
@@ -218,17 +223,22 @@ jQuery(function ($) {
 
                             break;
                         case 'Game':
+
+
                             if (!this.gameState) {
                                 window.location.hash = 'Home';
                                 return;
                             }
 
-                            pageHtml = '<div class="score">Player-1 - 10 : Player-1 - 10</div>' +
+
+                            pageHtml = '<div class="touch-control"><div class="left"></div><div class="right"></div></div>' +
+                                '<div class="score">Player-1 - 10 : Player-1 - 10</div>' +
                                 '<div class="tennis-box"></div>';
                             callback = function () {
 
                                 $('.tennis-box').append(canvas);
-                                callback = this.updateScore();
+
+                                this.updateScore();
                                 this.bindGameEvents();
                                 this.loop();
 
@@ -248,12 +258,16 @@ jQuery(function ($) {
 
                     $('div.page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
 
-                        $('.page').html(pageHtml);
 
                         if (callback != undefined) {
-                           setTimeout(function(){
-                               callback();
-                           },1);
+
+                            $('.page').html(pageHtml).promise().done(function () {
+                                callback();
+                            });
+
+                        }
+                        else {
+                            $('.page').html(pageHtml);
                         }
 
 
@@ -335,6 +349,9 @@ jQuery(function ($) {
             };
 
             App.prototype.keySet = function (e) {
+
+                var key, state;
+
                 if (e.type === 'blur') {
 
                     for (var key in keyEvents) {
@@ -346,8 +363,28 @@ jQuery(function ($) {
                     return false;
                 }
 
-                var key = e.keyCode,
+                if (e.type === 'touchstart' || e.type === 'touchend') {
+
+                    var targetClass = $(e.target).attr('class');
+
+                    state = false;
+                    if (e.type === 'touchstart') {
+                        state = true;
+                    }
+
+                    if (targetClass == 'left') {
+                        key = 37;
+                    }
+                    if (targetClass == 'right') {
+                        key = 39;
+                    }
+
+
+                }
+                else {
+                    key = e.keyCode;
                     state = (e.type == 'keydown') ? true : false;
+                }
 
 
                 if (key == 37 || key == 39 || key == 32) {
@@ -375,6 +412,7 @@ jQuery(function ($) {
                 }
 
             };
+
 
             App.prototype.updateKeyEvents = function () {
                 if (this.player == 'playerOne') {
