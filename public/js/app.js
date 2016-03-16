@@ -1,6 +1,8 @@
 ;
 jQuery(function ($) {
-
+        $(window).dblclick(function(){
+          alert('sss');
+        });
         var canvas, ctx;
         canvas = $('<canvas>', {'id': 'tennis'}).attr({width: 1600, height: 1080});
         ctx = $(canvas).get(0).getContext('2d');
@@ -144,8 +146,6 @@ jQuery(function ($) {
                 $(document).bind('keyup', this.keySet);
                 $(document).bind('touchstart', this.keySet);
                 $(document).bind('touchend', this.keySet);
-                $(document).bind('dblclick', this.keySet);
-
             };
 
             App.prototype.unbindGameEvents = function () {
@@ -169,7 +169,7 @@ jQuery(function ($) {
                 var updateAppState = function (state) {
 
 
-                    $('.page').removeClass('remove-animation').addClass('add-animation');
+                    $('.main-page').removeClass('remove-animation').addClass('add-animation');
 
                     var url = state;
                     var pageHtml = '';
@@ -198,7 +198,6 @@ jQuery(function ($) {
                                 '</div> ' +
                                 '</nav>' +
                                 '</div>';
-
                             break;
                         case 'New_Game':
                             pageHtml =
@@ -255,22 +254,22 @@ jQuery(function ($) {
                     this.pageState = url;
 
 
-                    $('div.page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
+                    $('.main-page').one("transitionend webkitTransitionEnd oTransitio+nEnd MSTransitionEnd", function (e) {
 
 
                         if (callback != undefined) {
 
-                            $('.page').html(pageHtml).promise().done(function () {
+                            $('.main-page').html(pageHtml).promise().done(function () {
                                 callback();
                             });
 
                         }
                         else {
-                            $('.page').html(pageHtml);
+                            $('.main-page').html(pageHtml);
                         }
 
 
-                        $('.page').addClass('remove-animation');
+                        $('.main-page').addClass('remove-animation');
 
 
                     }).children().on("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function (e) {
@@ -348,9 +347,6 @@ jQuery(function ($) {
             };
 
             App.prototype.keySet = function (e) {
-
-                console.log(e.type);
-
                 var key, state;
 
                 if (e.type === 'blur') {
@@ -382,10 +378,7 @@ jQuery(function ($) {
 
 
                 }
-                if (e.type === 'dblclick') {
-                    state = true;
-                    key = 32;
-                }
+
                 else {
                     key = e.keyCode;
                     state = (e.type == 'keydown') ? true : false;
