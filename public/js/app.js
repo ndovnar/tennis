@@ -270,7 +270,7 @@ jQuery(function ($) {
 
 
                         default :
-                            pageHtml = '<div class="container center"> page ' + '"' + state + '"' + ' not found</div>';
+                            pageHtml = '<div class="container center"><p class="not-found"> page ' + '"' + state + '"' + ' not found</p></div>';
 
                     }
 
@@ -349,23 +349,33 @@ jQuery(function ($) {
             };
 
             App.prototype.updateRoomList = function () {
+
                 if (this.pageState != 'Join_Game') {
                     return;
                 }
+                if(this.roomsList.length>0){
+                    var listRoomHtml =
+                        '<div class="game-list">' +
+                        '<table>' +
+                        '<thead>' +
+                        '<tr><td>Game Name</td><td>Players</td></tr>' +
+                        '</thead>' +
+                        '<tbody>';
 
-                var listRoomHtml =
-                    '<div class="game-list">' +
-                    '<table>' +
-                    '<thead>' +
-                    '<tr><td>Game Name</td><td>Players</td></tr>' +
-                    '</thead>' +
-                    '<tbody>';
 
+                    for (var key in this.roomsList) {
+                        listRoomHtml += '<tr><td class="game-name">' + this.roomsList[key].roomName + '</td>' + '<td class="players-room">' + this.roomsList[key].players + '<span>/2</span></td></tr>'
+                    }
 
-                for (var key in this.roomsList) {
-                    listRoomHtml += '<tr><td class="game-name">' + this.roomsList[key].roomName + '</td>' + '<td class="players-room">' + this.roomsList[key].players + '<span>/2</span></td></tr>'
+                    listRoomHtml += '</tbody></table><input type="text" name="nickName" autocomplete="off" placeholder="Your Nick Name"><a id="JoinGame" href="#" class="link blue small">Connected</a></div></div>';
                 }
-                listRoomHtml += '</tbody></table><input type="text" name="nickName" autocomplete="off" placeholder="Your Nick Name"><a id="JoinGame" href="#" class="link blue small">Connected</a></div></div>';
+                else{
+                    listRoomHtml = '<ul>' +
+                        '<li><p class="not-found">Games not found</p></li>' +
+                        '<li><a class="link blue" href="#New_Game">New Game</a></li>' +
+                        '</ul>';
+                }
+
 
                 $('.container').html(listRoomHtml);
 
