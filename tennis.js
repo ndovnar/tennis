@@ -224,7 +224,7 @@ exports.initGame = function (serverIo, socket) {
                 this.tennis = tennis;
                 this.loser = 'playerOne';
                 this.goal = true;
-                this.speed = 950;
+                this.speed = 500;
                 this.size = 26;
                 this.magicalNumber = 7;
                 this.radius = this.size / 2;
@@ -550,7 +550,7 @@ exports.initGame = function (serverIo, socket) {
                 this.nickName = undefined
                 this.width = 250;
                 this.height = 56;
-                this.speed = 3200;
+                this.speed = 500;
                 this.offset = 70;
 
                 this.position = {
