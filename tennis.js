@@ -550,7 +550,7 @@ exports.initGame = function (serverIo, socket) {
                 this.nickName = undefined
                 this.width = 250;
                 this.height = 56;
-                this.speed = 1200;
+                this.speed = 3200;
                 this.offset = 70;
 
                 this.position = {
